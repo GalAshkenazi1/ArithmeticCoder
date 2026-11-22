@@ -9,11 +9,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from src.encdec import ArithmeticCoder, MessagePack
-from src.permutation import PermutedModel
+from arithmetic_coder.coding.encdec import ArithmeticCoder, MessagePack
+from arithmetic_coder.coding.permutation import PermutedModel
 
 if TYPE_CHECKING:
-    from src.modelwrapper import ModelWrapper, UniformModelWrapper
+    from arithmetic_coder.models.wrappers import ModelWrapper, UniformModelWrapper
 
     BaseModel = ModelWrapper | UniformModelWrapper
 

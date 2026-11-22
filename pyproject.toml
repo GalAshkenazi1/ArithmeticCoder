@@ -1,0 +1,39 @@
+[project]
+name = "arithmetic-coder"
+version = "0.1.0"
+description = "Arithmetic coding of text with char-level language models, with a P2P chat and an interactive web demo"
+readme = "README.md"
+authors = [
+    { name = "Gal Ashkenazi", email = "galag123@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.165.0",
+    "numpy>=2.5.5",
+    "prompt-toolkit>=3.0.53",
+    "torch>=2.15.0",
+    "uvicorn>=0.54.0",
+    "websockets>=17.4",
+]
+
+[project.scripts]
+arith-relay = "arithmetic_coder.p2p.relay:main"
+arith-chat = "arithmetic_coder.p2p.cli:main"
+arith-demo = "arithmetic_coder.api.app:main"
+arith-import-model = "arithmetic_coder.models.importer:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+]
+studies = [
+    "matplotlib>=3.11.2",
+]

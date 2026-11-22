@@ -1,0 +1,5 @@
+{
+  "name": "Shakespeare-GPT",
+  "description": "0.8M-param char-level nanoGPT trained on Tiny Shakespeare",
+  "kind": "nanogpt"
+}

@@ -6,14 +6,24 @@ from bisect import bisect_right
 from dataclasses import dataclass
 from fractions import Fraction
 from itertools import accumulate
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator, NamedTuple
 
 if TYPE_CHECKING:  # type hints only, so importing the coder doesn't load torch
-    from src.modelwrapper import ModelWrapper, UniformModelWrapper
-    from src.permutation import PermutedModel
+    from arithmetic_coder.coding.permutation import PermutedModel
+    from arithmetic_coder.models.wrappers import ModelWrapper, UniformModelWrapper
 
 FINGERPRINT_SIZE = 4  # bytes of model fingerprint at the start of every wire frame
 _FINGERPRINT_DOMAIN = b"arithmetic-coder/fingerprint/v1"
+
+
+class EncodeStep(NamedTuple):
+    """One encoding step; intervals are (L, R, s) meaning [L / 2^s, (L + R) / 2^s)."""
+
+    index: int                     # position of the character in the message
+    c_index: int                   # its slot in the coder's (possibly permuted) vocab
+    cdf: list[int]                 # integer CDF used for this step (cdf[-1] = 2**precision_bits)
+    before: tuple[int, int, int]   # interval before the character
+    after: tuple[int, int, int]    # interval after zooming into the character's slot
 
 
 def _write_varint(n: int) -> bytes:
@@ -160,8 +170,8 @@ class ArithmeticCoder:
         R = R * (cdf[c_index + 1] - cdf[c_index])
         return L, R, s + self.precision_bits
 
-    def encode(self, msg: str) -> MessagePack:
-        """Encode msg as the shortest binary fraction inside its final interval, plus its length."""
+    def iter_encode(self, msg: str) -> Iterator[EncodeStep]:
+        """Yield one EncodeStep per character: the CDF used and the interval before and after it."""
 
         # interval is [L / 2^s, (L + R) / 2^s), all plain ints -> exact and gcd-free
         L, R, s = 0, 1, 0
@@ -170,10 +180,16 @@ class ArithmeticCoder:
             if c_index is None:
                 raise ValueError(f"Character {c!r} at position {i} not in vocabulary")
             cdf = self._get_cdf(msg[:i])
+            before = (L, R, s)
             L, R, s = self._step(L, R, s, cdf, c_index)
+            yield EncodeStep(i, c_index, cdf, before, (L, R, s))
 
+    def encode(self, msg: str) -> MessagePack:
+        """Encode msg as the shortest binary fraction inside its final interval, plus its length."""
+        L, R, s = 0, 1, 0
+        for step in self.iter_encode(msg):
+            L, R, s = step.after
         r = shortest_binary_in_range(Fraction(L, 1 << s), Fraction(L + R, 1 << s))
-
         return MessagePack(r, len(msg))
 
 

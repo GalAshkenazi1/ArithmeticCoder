@@ -5,50 +5,33 @@ Models:
   - nanoGPT English:     same architecture, trained on Gutenberg prose     (model_bank/english_char)
   - Uniform:             UniformModelWrapper over the same 65-char vocab   (log2(65) = 6.02 bits/char)
 
-Train the models first:
-    python model_bank/train_nanogpt.py shakespeare_char
-    python model_bank/train_nanogpt.py english_char
+The models come from the model registry (model_bank/). Run (from the project root):
+    uv run --group studies python studies/01_compare_models/compare_models.py
 
-Run (from the project root):
-    python research/01_compare_models/compare_models.py
-
-Outputs go to research/01_compare_models/results/.
+Outputs go to studies/01_compare_models/results/.
 """
 import csv
 import json
 import statistics
-import sys
 import time
 from pathlib import Path
-
-HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[1]
-BANK = ROOT / "model_bank"
-RESULTS = HERE / "results"
-sys.path[:0] = [str(ROOT), str(BANK / "nanoGPT")]
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from model import GPT, GPTConfig  # nanoGPT's model.py
 
-from src.encdec import ArithmeticCoder
-from src.modelwrapper import ModelWrapper, UniformModelWrapper
+from arithmetic_coder.coding.encdec import ArithmeticCoder
+from arithmetic_coder.models.registry import load_model
+
+HERE = Path(__file__).resolve().parent
+RESULTS = HERE / "results"
 
 RAW_BITS_PER_CHAR = 8  # plain 8-bit text, for reference
 
 # chart tokens (dataviz reference palette, light mode): categorical slots 1-3 + recessive chrome
 COLORS = ["#2a78d6", "#eb6834", "#1baf7a"]
 SURFACE, INK, INK2, MUTED, GRID, AXIS = "#fcfcfb", "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
-
-
-def load_nanogpt(name: str) -> ModelWrapper:
-    """Load a char-level nanoGPT checkpoint from the model bank."""
-    folder = BANK / name
-    return ModelWrapper.from_nanogpt_checkpoint(
-        folder / "ckpt.pt", lambda **args: GPT(GPTConfig(**args)), folder / "meta.pkl"
-    )
 
 
 def measure(coder: ArithmeticCoder, sentences: list[str]) -> list[dict]:
@@ -151,11 +134,10 @@ def plot_bpc_distribution(names, per_sentence_bpc, path):
 def main() -> None:
     """Run all models over all sentences and write tables + figures to results/."""
     sentences = json.loads((HERE / "sentences.json").read_text(encoding="utf-8"))["sentences"]
-    shakespeare = load_nanogpt("shakespeare_char")
-    models = {
-        "nanoGPT Shakespeare": shakespeare,
-        "nanoGPT English": load_nanogpt("english_char"),
-        "Uniform": UniformModelWrapper(shakespeare.get_vocab()),
+    models = {  # labels kept as in the committed results
+        "nanoGPT Shakespeare": load_model("shakespeare_char"),
+        "nanoGPT English": load_model("english_char"),
+        "Uniform": load_model("uniform"),
     }
     names = list(models)
 

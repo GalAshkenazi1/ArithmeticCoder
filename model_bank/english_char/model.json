@@ -1,0 +1,5 @@
+{
+  "name": "English-GPT",
+  "description": "same architecture, trained on 19th-century Gutenberg prose (Austen, Doyle, Dickens, Shelley, Carroll)",
+  "kind": "nanogpt"
+}

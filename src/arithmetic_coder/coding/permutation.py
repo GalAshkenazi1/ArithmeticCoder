@@ -4,7 +4,7 @@ import hashlib
 from typing import TYPE_CHECKING, Iterator
 
 if TYPE_CHECKING:  # type hints only, so importing this module doesn't load torch
-    from src.modelwrapper import ModelWrapper
+    from arithmetic_coder.models.wrappers import ModelWrapper
 
 _DOMAIN = b"arithmetic-coder/permutation/v1"
 

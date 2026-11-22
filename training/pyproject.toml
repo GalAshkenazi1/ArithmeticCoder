@@ -1,0 +1,32 @@
+# Separate uv project for training models on the GPU.
+#
+# Training needs a CUDA build of torch, while the app itself runs on CPU torch (peers must get
+# bit-identical probabilities, so the app's torch build stays fixed). Keeping training in its own
+# environment means the two never mix. Checkpoints are plain weights, usable by any torch version.
+#
+#   uv run --project training python training/train.py --list
+[project]
+name = "arithmetic-coder-training"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "arithmetic-coder",
+    "torch==2.15.0",
+    "numpy",
+    "pyarrow",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+arithmetic-coder = { path = "..", editable = true }
+torch = { index = "pytorch-cu132" }
+
+[[tool.uv.index]]
+name = "pytorch-cu132"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true

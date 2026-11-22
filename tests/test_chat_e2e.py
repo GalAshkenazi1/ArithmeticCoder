@@ -3,8 +3,8 @@ import asyncio
 
 import pytest
 
-from src.chat import MISMATCH, VERIFIED, ChatController, ChatError, run_cli
-from src.relay import start_relay
+from arithmetic_coder.p2p.cli import MISMATCH, VERIFIED, ChatController, ChatError, run_cli
+from arithmetic_coder.p2p.relay import start_relay
 
 
 async def start_relay_url():

@@ -1,6 +1,6 @@
 """Command-line chat client: arithmetic-coded messages to peers through the relay.
 
-Run:  python -m src.chat --user alice [--relay ws://127.0.0.1:8765] [--state-dir DIR]
+Run:  uv run arith-chat --user alice [--relay ws://127.0.0.1:8765] [--state-dir DIR]
 
 ChatController holds all the logic and reports through an `output(line)` callback, so it can be
 tested without a terminal; main() only adds the prompt_toolkit input line on top.
@@ -16,11 +16,11 @@ from pathlib import Path
 from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed
 
-from src.client import CorruptedPayloadError, ModelMismatchError, UserClient
-from src.encdec import MessagePack
-from src.model_bank import MODEL_NAMES, ModelBankError, load_model
-from src.peer_store import load_peers, save_peers, state_path
-from src.protocol import check_id, decode_control, encode_control, pack_routed, unpack_routed
+from arithmetic_coder.coding.encdec import MessagePack
+from arithmetic_coder.models.registry import ModelBankError, get_spec, list_models, load_model
+from arithmetic_coder.p2p.client import CorruptedPayloadError, ModelMismatchError, UserClient
+from arithmetic_coder.p2p.peer_store import load_peers, save_peers, state_path
+from arithmetic_coder.p2p.protocol import check_id, decode_control, encode_control, pack_routed, unpack_routed
 
 DEFAULT_RELAY = "ws://127.0.0.1:8765"
 PENDING, VERIFIED, MISMATCH = "pending", "verified", "MISMATCH"
@@ -264,8 +264,8 @@ class ChatController:
             raise ValueError("you can't add yourself")
         if peer in self.client.sessions:
             raise ValueError(f"{peer} is already added; /remove {peer} first to change it")
-        if model not in MODEL_NAMES:
-            raise ValueError(f"unknown model {model!r}; choose from {', '.join(MODEL_NAMES)}")
+        if not get_spec(model).available:  # raises ModelBankError for unknown ids
+            raise ValueError(f"model {model!r} is listed but its files are missing")
         if not 8 <= precision <= 32:
             raise ValueError("precision must be between 8 and 32")
         await self._register(peer, {"model": model, "key": key, "precision_bits": precision})
@@ -290,7 +290,9 @@ class ChatController:
 
     async def _cmd_models(self, args: list[str]) -> None:
         """/models"""
-        self.output("models: " + ", ".join(MODEL_NAMES))
+        for spec in list_models():
+            note = "" if spec.available else "  (files missing)"
+            self.output(f"  {spec.id:17s} {spec.name:17s} {spec.description}{note}")
 
     async def _cmd_stats(self, args: list[str]) -> None:
         """/stats on|off"""

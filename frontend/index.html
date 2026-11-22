@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P2P Semantic Codec - arithmetic coding demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230e7490'/%3E%3Crect x='3' y='6' width='10' height='4' rx='1' fill='%2310b981'/%3E%3C/svg%3E">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="text-slate-200">
+<div class="app">
+
+  <!-- header: title, shared-session status, model switcher, shared key (wraps on narrow windows) -->
+  <header class="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 border-b border-slate-800 bg-[#0b111d]">
+    <div class="whitespace-nowrap">
+      <h1 class="text-lg font-semibold tracking-tight">P2P Semantic Codec</h1>
+      <p class="text-xs text-slate-500 hidden 2xl:block">arithmetic coding with a character-level language model</p>
+    </div>
+    <div id="status-pill" class="status-pill">
+      <span class="dot"></span>
+      <span>Synced Model: <b id="status-model">-</b></span>
+      <span class="sep">|</span>
+      <span>Fingerprint: <code id="status-fingerprint">-</code></span>
+      <span class="sep">|</span>
+      <span>Vocab: <b id="status-vocab">-</b> chars</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 ml-auto">
+      <label class="flex items-center gap-2 text-xs">
+        <span class="text-slate-400 whitespace-nowrap">model</span>
+        <select id="model-switcher" class="field model-select"></select>
+      </label>
+      <form id="key-form" class="flex items-center gap-2 text-xs">
+        <label for="key-input" class="text-slate-400 whitespace-nowrap">shared key</label>
+        <input id="key-input" class="field w-28" maxlength="64" autocomplete="off" spellcheck="false">
+        <button class="btn-ghost" type="submit">apply</button>
+      </form>
+    </div>
+  </header>
+
+  <!-- three columns (Alice | the encoder | Bob); stacks on narrow windows, see app.css -->
+  <main class="layout">
+
+    <section id="alice-panel" class="card chat-panel" data-user="alice">
+      <div class="panel-title"><span class="avatar bg-cyan-500/20 text-cyan-300">A</span> Alice</div>
+      <div class="history"></div>
+      <div class="presets"></div>
+      <form class="composer">
+        <input class="field" placeholder="Message Bob..." maxlength="280" autocomplete="off" spellcheck="false">
+        <button class="btn-primary" type="submit">Send</button>
+      </form>
+      <p class="error-line"></p>
+    </section>
+
+    <section class="center">
+      <div class="card p-4 zoom-card">
+        <div class="flex flex-wrap items-center justify-between gap-x-3 mb-2">
+          <h2 class="card-title">Interval zoom</h2>
+          <span id="zoom-caption" class="text-xs text-slate-500 truncate">send a message to watch it being encoded</span>
+        </div>
+        <div class="canvas-box"><canvas id="zoom-canvas"></canvas></div>
+        <div class="flex flex-wrap items-center gap-2 mt-3 text-xs">
+          <button id="btn-back" class="btn-ghost" title="previous character">&#9664;</button>
+          <button id="btn-play" class="btn-ghost w-16" title="play / pause">Play</button>
+          <button id="btn-forward" class="btn-ghost" title="next character">&#9654;</button>
+          <input id="step-slider" type="range" min="0" max="0" value="0" class="flex-1 min-w-[6rem] accent-cyan-400">
+          <span id="step-label" class="text-slate-500 w-16 text-right">0 / 0</span>
+          <div id="speed" class="segmented small">
+            <button data-speed="0.5">0.5x</button><button data-speed="1" class="active">1x</button><button data-speed="2">2x</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="bit-tracker" class="card p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h2 class="card-title">Bits so far</h2>
+          <span class="tracker-pill"></span>
+        </div>
+        <div class="tracker-prefix mono text-sm"></div>
+        <div class="tracker-prob text-xs text-slate-400 mt-1"></div>
+        <div class="tracker-bits mono text-xs mt-2"></div>
+        <div class="tracker-ticks mt-3"></div>
+      </div>
+    </section>
+
+    <section id="bob-panel" class="card chat-panel" data-user="bob">
+      <div class="panel-title"><span class="avatar bg-amber-500/20 text-amber-300">B</span> Bob</div>
+      <div class="history"></div>
+      <div class="presets"></div>
+      <form class="composer">
+        <input class="field" placeholder="Reply to Alice..." maxlength="280" autocomplete="off" spellcheck="false">
+        <button class="btn-primary" type="submit">Send</button>
+      </form>
+      <p class="error-line"></p>
+    </section>
+
+  </main>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

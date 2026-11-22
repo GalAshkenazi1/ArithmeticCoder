@@ -1,6 +1,11 @@
 __pycache__/
 *.pyc
 model_bank/nanoGPT/
-model_bank/_downloads/
 *.log
 *.json.tmp
+.venv/
+.pytest_cache/
+.benchmarks/
+training/_downloads/
+training/_data/
+!model_bank/*/train.log

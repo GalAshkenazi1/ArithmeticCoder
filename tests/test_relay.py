@@ -4,8 +4,8 @@ import asyncio
 from websockets.asyncio.client import connect
 from websockets.exceptions import ConnectionClosed
 
-from src.protocol import decode_control, encode_control, pack_routed, unpack_routed
-from src.relay import start_relay
+from arithmetic_coder.p2p.protocol import decode_control, encode_control, pack_routed, unpack_routed
+from arithmetic_coder.p2p.relay import start_relay
 
 
 async def relay_url():

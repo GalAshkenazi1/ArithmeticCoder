@@ -5,7 +5,7 @@ from fractions import Fraction
 
 import pytest
 
-from src.encdec import ArithmeticCoder, MessagePack, _write_varint, shortest_binary_in_range
+from arithmetic_coder.coding.encdec import ArithmeticCoder, MessagePack, _write_varint, shortest_binary_in_range
 
 
 class FakeModel:
@@ -119,7 +119,7 @@ def test_to_bytes_checks_fingerprint_size():
 
 
 def test_fingerprint_depends_on_precision_and_vocab_order(vocab, uniform):
-    from src.modelwrapper import UniformModelWrapper
+    from arithmetic_coder.models.wrappers import UniformModelWrapper
 
     base = ArithmeticCoder(uniform).fingerprint()
     assert len(base) == 4

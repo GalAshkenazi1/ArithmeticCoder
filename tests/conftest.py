@@ -1,15 +1,12 @@
-"""Shared fixtures: project imports, the trained Shakespeare model, and a uniform model over its vocab."""
-import sys
+"""Shared fixtures: the trained Shakespeare model and a uniform model over its vocab."""
 from pathlib import Path
 
 import pytest
 
+from arithmetic_coder.models.registry import ModelBankError, bank_vocab, load_model, load_model_uncached
+
 ROOT = Path(__file__).resolve().parents[1]
 SENTENCES = ROOT / "studies" / "01_compare_models" / "sentences.json"
-
-sys.path.insert(0, str(ROOT))
-
-from src.model_bank import ModelBankError, bank_vocab, load_model, load_model_uncached  # noqa: E402
 
 
 def load_shakespeare():

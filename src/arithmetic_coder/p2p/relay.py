@@ -1,6 +1,6 @@
 """Zero-knowledge relay: routes chat frames and handshakes between users by id, queues for offline users.
 
-Run:  python -m src.relay [--host 127.0.0.1] [--port 8765]
+Run:  uv run arith-relay [--host 127.0.0.1] [--port 8765]
 
 The relay never loads a model or sees a key; it only reads user ids and forwards opaque bytes.
 """
@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 from websockets.asyncio.server import Server, ServerConnection, serve
 from websockets.exceptions import ConnectionClosed
 
-from src.protocol import check_id, decode_control, encode_control, pack_routed, unpack_routed
+from arithmetic_coder.p2p.protocol import check_id, decode_control, encode_control, pack_routed, unpack_routed
 
 log = logging.getLogger("relay")
 
@@ -129,7 +129,8 @@ async def _main(host: str, port: int) -> None:
     await server.serve_forever()
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Console entry point (arith-relay): parse arguments and run the relay until Ctrl-C."""
     parser = argparse.ArgumentParser(description="Zero-knowledge relay for the arithmetic-coding chat.")
     parser.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to accept LAN connections")
     parser.add_argument("--port", type=int, default=8765)
@@ -139,3 +140,7 @@ if __name__ == "__main__":
         asyncio.run(_main(args.host, args.port))
     except KeyboardInterrupt:
         pass
+
+
+if __name__ == "__main__":
+    main()

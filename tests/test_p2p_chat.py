@@ -4,13 +4,13 @@ import json
 import pytest
 from conftest import SENTENCES
 
-from src.client import (
+from arithmetic_coder.p2p.client import (
     CorruptedPayloadError,
     ModelMismatchError,
     PeerNotFoundError,
     UserClient,
 )
-from src.encdec import MessagePack
+from arithmetic_coder.coding.encdec import MessagePack
 
 KEY_BOB = "alice+bob shared key"
 KEY_CHARLIE = b"alice+charlie shared key"

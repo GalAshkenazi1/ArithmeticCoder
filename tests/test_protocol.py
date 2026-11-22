@@ -1,7 +1,7 @@
 """Tests for the relay message formats."""
 import pytest
 
-from src.protocol import MAX_ID_BYTES, decode_control, encode_control, pack_routed, unpack_routed
+from arithmetic_coder.p2p.protocol import MAX_ID_BYTES, decode_control, encode_control, pack_routed, unpack_routed
 
 
 @pytest.mark.parametrize("user_id, frame", [("bob", b"\x01\x02\x03"), ("b", b""), ("x" * MAX_ID_BYTES, b"\xff" * 300)])
