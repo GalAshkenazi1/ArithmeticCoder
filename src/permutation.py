@@ -1,7 +1,10 @@
-import hashlib
-from typing import Iterator
+from __future__ import annotations
 
-from src.modelwrapper import ModelWrapper
+import hashlib
+from typing import TYPE_CHECKING, Iterator
+
+if TYPE_CHECKING:  # type hints only, so importing this module doesn't load torch
+    from src.modelwrapper import ModelWrapper
 
 _DOMAIN = b"arithmetic-coder/permutation/v1"
 
@@ -61,6 +64,10 @@ class PermutedModel:
     def get_vocab(self) -> list[str]:
         """Return the vocabulary in permuted slot order."""
         return self.vocab
+
+    def model_digest(self) -> bytes:
+        """Return the inner model's digest (the permutation shows up in the vocab order the coder hashes)."""
+        return self.inner.model_digest()
 
     def get_char_probs(self, prefix: str) -> list[float]:
         """Return the inner model's next-char probabilities in permuted slot order."""

@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 import torch
 import torch.nn.functional as F
@@ -34,6 +35,7 @@ class ModelWrapper:
                 f"BOS character {bos_char!r} must exist in the vocabulary."
             )
         self.bos_id = self.stoi[bos_char]
+        self._digest: bytes | None = None
 
     @classmethod
     def from_nanogpt_checkpoint(
@@ -78,6 +80,19 @@ class ModelWrapper:
         """Return the vocabulary as a list of characters in order."""
         return self.vocab
 
+    def model_digest(self) -> bytes:
+        """Return a SHA-256 of everything that shapes the predictions: weights, block_size and BOS id."""
+        if self._digest is None:
+            h = hashlib.sha256(b"modelwrapper/v1")
+            h.update(self.block_size.to_bytes(4, "big") + self.bos_id.to_bytes(4, "big"))
+            for name, tensor in sorted(self.model.state_dict().items()):
+                t = tensor.detach().cpu().contiguous()
+                raw = t.numpy().tobytes()
+                h.update(f"{name}|{t.dtype}|{tuple(t.shape)}|{len(raw)}|".encode("utf-8"))
+                h.update(raw)
+            self._digest = h.digest()
+        return self._digest
+
     @torch.inference_mode()
     def get_char_probs(self, prefix: str) -> list[float]:
         """Return the probability distribution over the next character given the prefix."""
@@ -113,6 +128,10 @@ class UniformModelWrapper:
     def get_vocab(self) -> list[str]:
         """Return the vocabulary as a list of characters in order."""
         return self.vocab
+
+    def model_digest(self) -> bytes:
+        """Return a fixed digest identifying the uniform model (the vocab is hashed by the coder)."""
+        return hashlib.sha256(b"uniform/v1").digest()
 
     def get_char_probs(self, prefix: str) -> list[float]:
         """Return the same uniform distribution for every prefix."""

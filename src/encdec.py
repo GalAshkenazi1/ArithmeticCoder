@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from bisect import bisect_right
 from dataclasses import dataclass
 from fractions import Fraction
@@ -7,13 +9,67 @@ from itertools import accumulate
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # type hints only, so importing the coder doesn't load torch
-    from modelwrapper import ModelWrapper, UniformModelWrapper
-    from permutation import PermutedModel
+    from src.modelwrapper import ModelWrapper, UniformModelWrapper
+    from src.permutation import PermutedModel
+
+FINGERPRINT_SIZE = 4  # bytes of model fingerprint at the start of every wire frame
+_FINGERPRINT_DOMAIN = b"arithmetic-coder/fingerprint/v1"
+
+
+def _write_varint(n: int) -> bytes:
+    """Encode a non-negative int as unsigned LEB128 (7 bits per byte, high bit = more bytes follow)."""
+    if n < 0:
+        raise ValueError(f"varint must be non-negative, got {n}")
+    out = bytearray()
+    while True:
+        byte, n = n & 0x7F, n >> 7
+        out.append(byte | (0x80 if n else 0))
+        if not n:
+            return bytes(out)
+
+
+def _read_varint(data: bytes, pos: int) -> tuple[int, int]:
+    """Decode an unsigned LEB128 int starting at data[pos]; return (value, position after it)."""
+    value, shift = 0, 0
+    while True:
+        if pos >= len(data):
+            raise ValueError("varint runs past the end of the frame")
+        byte = data[pos]
+        pos += 1
+        value |= (byte & 0x7F) << shift
+        shift += 7
+        if not byte & 0x80:
+            return value, pos
+
 
 @dataclass(frozen=True)
 class MessagePack:
     r: Fraction  # dyadic rational m / 2**k inside the final interval
     length: int  # number of characters in the original message
+
+    def to_bytes(self, fingerprint: bytes) -> bytes:
+        """Serialize to the wire frame: 4-byte fingerprint + varint length + r padded to whole bytes."""
+        if len(fingerprint) != FINGERPRINT_SIZE:
+            raise ValueError(f"fingerprint must be {FINGERPRINT_SIZE} bytes, got {len(fingerprint)}")
+        den = self.r.denominator
+        if den & (den - 1) or not (0 <= self.r < 1):
+            raise ValueError(f"r must be a dyadic rational in [0, 1), got {self.r}")
+        k = den.bit_length() - 1
+        nbytes = (k + 7) // 8
+        # m / 2^k == (m << pad) / 2^(8 * nbytes), so the k field is not needed on the wire
+        payload = (self.r.numerator << (8 * nbytes - k)).to_bytes(nbytes, "big")
+        return fingerprint + _write_varint(self.length) + payload
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> tuple[bytes, "MessagePack"]:
+        """Parse a wire frame into (fingerprint, MessagePack); raises ValueError on a malformed frame."""
+        if len(data) < FINGERPRINT_SIZE + 1:
+            raise ValueError(f"frame too short: {len(data)} bytes")
+        fingerprint = data[:FINGERPRINT_SIZE]
+        length, pos = _read_varint(data, FINGERPRINT_SIZE)
+        payload = data[pos:]
+        r = Fraction(int.from_bytes(payload, "big"), 1 << (8 * len(payload))) # reduces back to m / 2^k
+        return fingerprint, cls(r, length)
 
     def to_bits(self) -> str:
         """Fractional bits of r after the binary point (e.g. 3/8 -> "011")."""
@@ -67,6 +123,17 @@ class ArithmeticCoder:
         self.total = 1 << precision_bits
         if len(self.vocab) > self.total:
             raise ValueError("vocab is larger than 2**precision_bits; increase precision_bits")
+        self._fingerprint: bytes | None = None
+
+    def fingerprint(self) -> bytes:
+        """Return a 4-byte digest of (model weights, vocab order, precision) that both peers must share."""
+        if self._fingerprint is None:
+            h = hashlib.sha256(_FINGERPRINT_DOMAIN)
+            h.update(self.modelwrapper.model_digest())
+            h.update(self.precision_bits.to_bytes(2, "big"))
+            h.update(json.dumps(self.vocab).encode("utf-8")) # permuted order, so it also covers the key
+            self._fingerprint = h.digest()[:FINGERPRINT_SIZE]
+        return self._fingerprint
 
     def _get_freqs(self, char_probs) -> list:
         """Turn float probabilities into integer counts (each >= 1, so every char stays encodable) that sum to self.total."""

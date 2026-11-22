@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+model_bank/nanoGPT/
+model_bank/_downloads/
+*.log
+*.json.tmp
