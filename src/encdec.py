@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # type hints only, so importing the coder doesn't load torch
     from modelwrapper import ModelWrapper, UniformModelWrapper
+    from permutation import PermutedModel
 
 @dataclass(frozen=True)
 class MessagePack:
@@ -54,7 +55,7 @@ class ArithmeticCoder:
     """Exact (integer) arithmetic coder driven by a character-level language model."""
 
     def __init__(self,
-                 modelwrapper: ModelWrapper | UniformModelWrapper,
+                 modelwrapper: ModelWrapper | UniformModelWrapper | PermutedModel,
                  precision_bits: int = 16):
         """Store the model and quantize its probabilities to counts summing to 2**precision_bits."""
 
