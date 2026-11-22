@@ -1,0 +1,101 @@
+id,chars,raw_bits,bits_nanoGPT Shakespeare,bits_nanoGPT English,bits_Uniform,bpc_nanoGPT Shakespeare,bpc_nanoGPT English,bpc_Uniform,text
+0,67,536,162,203,402,2.418,3.030,6.000,"Good morrow, gentle cousin; the sun hath risen fair upon our house."
+1,81,648,180,221,487,2.222,2.728,6.012,"My lord, I pray thee, speak not so of love, for love is but a fever of the blood."
+2,72,576,175,208,433,2.431,2.889,6.014,Hark! Who comes hither in the dead of night with torches burning bright?
+3,55,440,144,172,331,2.618,3.127,6.018,"Thou art a knave, a villain, and a most notorious liar."
+4,80,640,213,237,482,2.663,2.962,6.025,"Fie upon this weary world, that gives the crown to fools and rags to honest men."
+5,75,600,178,188,450,2.373,2.507,6.000,"I will not stay to hear thy honeyed words, for they are poison to mine ear."
+6,72,576,229,264,432,3.181,3.667,6.000,"Come, sirrah, fetch my horse; we ride to Windsor ere the cock doth crow."
+7,51,408,137,162,306,2.686,3.176,6.000,"What news from Padua? Speak, man, and spare me not."
+8,73,584,160,174,440,2.192,2.384,6.027,"The king is dead, and with him dies the peace of all this troubled realm."
+9,73,584,189,205,439,2.589,2.808,6.014,"Alas, poor heart, that beats so fast for one who will not look upon thee."
+10,70,560,193,231,421,2.757,3.300,6.014,Methinks the lady hath a sharper tongue than any sword in Christendom.
+11,61,488,176,204,368,2.885,3.344,6.033,"Go to, go to; thou dost protest too loudly for an honest man."
+12,64,512,163,171,385,2.547,2.672,6.016,"Let us away, for the night grows cold and the wolves are hungry."
+13,70,560,165,181,419,2.357,2.586,5.986,"By heaven, I swear I never loved thee more than in this hour of grief."
+14,52,416,133,159,314,2.558,3.058,6.038,"Peace, good fellow, peace! Thy master sleeps within."
+15,62,496,155,162,372,2.500,2.613,6.000,These are but shadows of a dream that vanish with the morning.
+16,76,608,177,236,454,2.329,3.105,5.974,"Wherefore dost thou weep, sweet maid, when all the world doth smile on thee?"
+17,68,544,191,216,410,2.809,3.176,6.029,"Hence, thou mewling coward, lest I teach thee manners with my blade!"
+18,63,504,159,180,379,2.524,2.857,6.016,A plague upon your idle chatter; I have business with the duke.
+19,53,424,139,142,319,2.623,2.679,6.019,"Fair lady, may I beg a moment of your gentle company?"
+20,47,376,114,119,284,2.426,2.532,6.043,The stars themselves conspire against our love.
+21,54,432,123,141,325,2.278,2.611,6.019,"I have a letter here, sealed with the duke's own ring."
+22,50,400,157,162,301,3.140,3.240,6.020,"O, what a tangled knot is woven by a jealous mind!"
+23,52,416,135,149,313,2.596,2.865,6.019,Thy father's ghost walks nightly on the battlements.
+24,57,456,143,173,342,2.509,3.035,6.000,"Speak low, for walls have ears and servants have tongues."
+25,48,384,138,168,288,2.875,3.500,6.000,"Sweet music, play; my soul is sick with longing."
+26,64,512,170,179,385,2.656,2.797,6.016,"Ay, marry, and a merry jest it was, though none did laugh but I."
+27,59,472,153,172,355,2.593,2.915,6.017,"Tell me, good friar, is there no remedy for a broken heart?"
+28,62,496,172,171,374,2.774,2.758,6.032,He that would climb the mountain must first endure the valley.
+29,48,384,115,123,289,2.396,2.562,6.021,Now is the hour; draw your swords and follow me!
+30,86,688,242,260,518,2.814,3.023,6.023,"I know not why I am so sad, yet sorrow sits upon my brow like a heavy crown of thorns."
+31,69,552,176,206,408,2.551,2.986,5.913,"Thou speakest like a fool, and yet there is some wisdom in thy folly."
+32,57,456,149,162,344,2.614,2.842,6.035,"What, ho! Open the gate, I say, or I shall break it down!"
+33,56,448,139,144,337,2.482,2.571,6.018,The rain it falleth on the just and on the unjust alike.
+34,58,464,155,183,346,2.672,3.155,5.966,"Be patient, sister; time will mend what anger hath undone."
+35,62,496,146,179,374,2.355,2.887,6.032,"Mine honour is the jewel of my house, and none shall steal it."
+36,59,472,151,185,352,2.559,3.136,5.966,"Get thee to bed, thou drunken lout, and trouble us no more."
+37,47,376,114,121,281,2.426,2.574,5.979,"How now, what means this clamour in the street?"
+38,55,440,127,160,329,2.309,2.909,5.982,"The queen hath fainted, and the court is all in uproar."
+39,45,360,128,134,268,2.844,2.978,5.956,"Bring wine, and let us drink to happier days."
+40,56,448,133,150,337,2.375,2.679,6.018,I do beseech your grace to hear me out before you judge.
+41,56,448,153,157,337,2.732,2.804,6.018,Her eyes are like twin stars that light the darkest sea.
+42,48,384,130,170,289,2.708,3.542,6.021,"O treacherous fortune, why dost thou mock me so?"
+43,51,408,127,147,306,2.490,2.882,6.000,Thou hast betrayed thy country for a purse of gold.
+44,51,408,128,132,306,2.510,2.588,6.000,"Soft, here comes the prince, attended by his lords."
+45,68,544,161,165,410,2.368,2.426,6.029,"Though we be few, we shall stand firm against their thousand spears."
+46,65,520,169,174,391,2.600,2.677,6.015,Love is a cunning thief that steals the reason of the wisest men.
+47,58,464,141,158,349,2.431,2.724,6.017,"Farewell, dear friend; we shall meet again in better days."
+48,72,576,190,189,433,2.639,2.625,6.014,"There is a tempest brewing in the west, and ships must seek the harbour."
+49,55,440,110,118,328,2.000,2.145,5.964,"Why, this is very madness, sir, and you should know it."
+50,40,320,104,121,241,2.600,3.025,6.025,"My purse is empty, but my heart is full."
+51,60,480,167,185,359,2.783,3.083,5.983,"Lend me thy cloak, good Tom, for I am chilled unto the bone."
+52,63,504,164,164,379,2.603,2.603,6.016,"The wedding shall be Thursday, and the feast shall last a week."
+53,61,488,151,193,368,2.475,3.164,6.033,Hast thou forgot the oath thou swore upon thy mother's grave?
+54,47,376,137,154,279,2.915,3.277,5.936,A pox on all false friends that smile and stab!
+55,47,376,108,106,282,2.298,2.255,6.000,"I am a simple man, and know not how to flatter."
+56,51,408,133,156,307,2.608,3.059,6.020,Look how the moon doth silver all the garden walls.
+57,48,384,126,144,289,2.625,3.000,6.021,"Thy wit is quick, but thy judgement is but slow."
+58,47,376,114,137,283,2.426,2.915,6.021,"Rise, good knight, and take thy place among us."
+59,55,440,137,167,330,2.491,3.036,6.000,"The battle is lost, my liege; the enemy is at the gate."
+60,46,368,129,158,277,2.804,3.435,6.022,"Sleep, sweet babe, and dream of gentler times."
+61,59,472,145,168,354,2.458,2.847,6.000,What strange and wondrous creatures dwell within this wood!
+62,55,440,112,150,331,2.036,2.727,6.018,"I'll have no more of this, I tell thee; leave my sight!"
+63,43,344,117,146,258,2.721,3.395,6.000,"The cup is poisoned; do not drink, my lord!"
+64,50,400,125,144,300,2.500,2.880,6.000,"Noble sir, your kindness shames my poor deserving."
+65,48,384,120,148,288,2.500,3.083,6.000,Grief hath made an old man of me before my time.
+66,48,384,112,130,289,2.333,2.708,6.021,"Who goes there? Stand and give the word, or die."
+67,45,360,111,128,267,2.467,2.844,5.933,The merchant's ships are lost upon the rocks.
+68,50,400,122,143,301,2.440,2.860,6.020,Let not ambition blind thee to the cost of crowns.
+69,49,392,105,136,292,2.143,2.776,5.959,"O, that I had a tongue to tell thee all my heart!"
+70,52,416,124,164,314,2.385,3.154,6.038,"Thou pale and trembling wretch, what hast thou seen?"
+71,51,408,133,145,307,2.608,2.843,6.020,The darkest night must yield at last unto the dawn.
+72,48,384,122,135,289,2.542,2.812,6.021,"Bid the trumpets sound, for the king approaches."
+73,46,368,127,162,276,2.761,3.522,6.000,My mistress hath a temper like a summer storm.
+74,40,320,101,132,241,2.525,3.300,6.025,"Prithee, good sir, direct me to the inn."
+75,49,392,137,136,295,2.796,2.776,6.020,Beware the man who smiles too often at thy table.
+76,54,432,120,120,325,2.222,2.222,6.019,I would give all my lands to hear her laugh once more.
+77,59,472,134,162,355,2.271,2.746,6.017,"The fool is wiser than the king, for he knows he is a fool."
+78,50,400,120,145,301,2.400,2.900,6.020,"Hold, hold! No more blood shall be spilt this day."
+79,47,376,107,114,283,2.277,2.426,6.021,"Thy letters came too late, and now she is gone."
+80,48,384,130,162,286,2.708,3.375,5.958,"Be merry, friends, for tomorrow we march to war."
+81,40,320,86,102,241,2.150,2.550,6.025,What is a name but breath upon the wind?
+82,39,312,97,114,235,2.487,2.923,6.026,The ravens gather on the castle towers.
+83,61,488,145,175,365,2.377,2.869,5.984,"I charge thee, by the love thou bearest me, reveal the truth."
+84,63,504,154,201,379,2.444,3.190,6.016,"False heart, thou didst swear thy love was constant as the sea."
+85,69,552,172,177,416,2.493,2.565,6.029,"My sword is drawn, and it shall not be sheathed till justice is done."
+86,36,288,104,122,213,2.889,3.389,5.917,"Ere the moon wanes, we shall be wed."
+87,53,424,150,174,319,2.830,3.283,6.019,An unkind word from a child cuts deeper than a blade.
+88,48,384,111,128,289,2.312,2.667,6.021,"Stay, I command thee, and answer for thy crimes."
+89,54,432,137,153,326,2.537,2.833,6.037,"The garden weeps with dew, as if it mourned the night."
+90,46,368,91,107,275,1.978,2.326,5.978,"Good gentlemen, I thank you for your patience."
+91,35,280,78,96,210,2.229,2.743,6.000,I fear this jest will end in tears.
+92,32,256,85,98,189,2.656,3.062,5.906,"Away, away! The watch is coming."
+93,43,344,127,153,259,2.953,3.558,6.023,"My kingdom is a cage, and I its weary bird."
+94,54,432,122,147,326,2.259,2.722,6.037,Thou hast the face of an angel and the heart of a fox.
+95,149,1192,419,455,892,2.812,3.054,5.987,"When winter comes upon the northern hills and all the rivers freeze, the shepherd counts his sheep and prays that spring will find them living still."
+96,131,1048,385,402,785,2.939,3.069,5.992,"I tell thee, cousin, there is more honesty in a beggar's rag than in all the silken robes that hang about this court of flatterers."
+97,44,352,119,132,263,2.705,3.000,5.977,"Pardon me, madam, I mistook you for another."
+98,108,864,299,295,648,2.769,2.731,6.000,"Let fortune frown; I'll laugh in spite of her, and dance upon the ruins of my hopes until the morning comes."
+99,47,376,120,156,283,2.553,3.319,6.021,"And so, good night; may angels guard thy sleep."

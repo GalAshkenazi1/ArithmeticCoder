@@ -1,0 +1,75 @@
+Overriding: device = cpu
+Overriding: compile = False
+Overriding: dtype = float32
+Overriding: n_layer = 4
+Overriding: n_head = 4
+Overriding: n_embd = 128
+Overriding: block_size = 128
+Overriding: dropout = 0.1
+Overriding: bias = False
+Overriding: batch_size = 24
+Overriding: gradient_accumulation_steps = 1
+Overriding: max_iters = 2000
+Overriding: lr_decay_iters = 2000
+Overriding: learning_rate = 0.001
+Overriding: min_lr = 0.0001
+Overriding: beta2 = 0.99
+Overriding: warmup_iters = 100
+Overriding: eval_interval = 250
+Overriding: eval_iters = 50
+Overriding: log_interval = 100
+Overriding: always_save_checkpoint = False
+Overriding: wandb_log = False
+Overriding: dataset = english_char
+Overriding: out_dir = C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+tokens per iteration will be: 3,072
+C:\Users\galle\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\backends\__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\aten\src\ATen\Context.cpp:85.)
+  self.setter(val)
+found vocab_size = 65 (inside data\english_char\meta.pkl)
+Initializing a new model from scratch
+number of parameters: 0.80M
+C:\Users\galle\VSProjects\arithmetic_coder\model_bank\nanoGPT\train.py:196: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16'))
+num decayed parameter tensors: 18, with 811,136 parameters
+num non-decayed parameter tensors: 9, with 1,152 parameters
+using fused AdamW: False
+step 0: train loss 4.1831, val loss 4.1874
+iter 0: loss 4.1977, time 7274.58ms, mfu -100.00%
+iter 100: loss 2.5969, time 428.80ms, mfu 0.01%
+iter 200: loss 2.4613, time 353.81ms, mfu 0.01%
+step 250: train loss 2.4158, val loss 2.4227
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 300: loss 2.3607, time 362.55ms, mfu 0.01%
+iter 400: loss 2.3697, time 398.69ms, mfu 0.01%
+step 500: train loss 2.1726, val loss 2.2188
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 500: loss 2.2155, time 6187.90ms, mfu 0.01%
+iter 600: loss 2.2162, time 410.26ms, mfu 0.01%
+iter 700: loss 2.1199, time 382.44ms, mfu 0.01%
+step 750: train loss 1.9619, val loss 2.0412
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 800: loss 2.0584, time 384.18ms, mfu 0.01%
+iter 900: loss 2.0249, time 429.91ms, mfu 0.01%
+step 1000: train loss 1.8292, val loss 1.9384
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 1000: loss 1.8558, time 4698.49ms, mfu 0.01%
+iter 1100: loss 1.9097, time 367.18ms, mfu 0.01%
+iter 1200: loss 1.8513, time 370.82ms, mfu 0.01%
+step 1250: train loss 1.7220, val loss 1.8532
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 1300: loss 1.8776, time 379.08ms, mfu 0.01%
+iter 1400: loss 1.8946, time 342.23ms, mfu 0.01%
+step 1500: train loss 1.6596, val loss 1.7907
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 1500: loss 1.7659, time 4770.26ms, mfu 0.01%
+iter 1600: loss 1.7871, time 354.67ms, mfu 0.01%
+iter 1700: loss 1.7984, time 351.60ms, mfu 0.01%
+step 1750: train loss 1.6215, val loss 1.7573
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 1800: loss 1.7264, time 369.08ms, mfu 0.01%
+iter 1900: loss 1.8243, time 340.68ms, mfu 0.01%
+step 2000: train loss 1.6022, val loss 1.7415
+saving checkpoint to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
+iter 2000: loss 1.7144, time 4908.22ms, mfu 0.01%
+english_char: 1,115,394 chars, vocab 65, train 1,003,854 / val 111,540
+saved model to C:\Users\galle\VSProjects\arithmetic_coder\model_bank\english_char
