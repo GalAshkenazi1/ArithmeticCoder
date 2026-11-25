@@ -8,15 +8,28 @@ Decided:
 - **Repo:** public.
 - **Version:** the full one, with GPT-2.
 
-Done in the code (not yet committed):
-- [x] **CPU-only torch on Linux:** `deploy/torch-cpu.toml`, which the Dockerfiles append to
+Done in the code:
+- [x] **CPU-only torch on Linux:** `deploy/torch-cpu.toml`, which the root `Dockerfile` appends to
       `pyproject.toml` before re-locking. It isn't in `pyproject.toml` itself because `training/`
       depends on the app and needs CUDA torch; uv can't hold both sources for the same package.
 - [x] **Server settings:** `HOST`/`PORT` from the environment, startup warm-up (`ARITH_PRELOAD`), a
       response cache, a per-IP rate limit (`ARITH_RATE_LIMIT`), a 503 when the models stay busy
       (`ARITH_WAIT_SECONDS`), and `GET /api/health`. All covered by tests.
-- [x] **Container:** `Dockerfile`, `.dockerignore`, and the Space's own files in
-      `deploy/huggingface/`, plus `.github/workflows/deploy-space.yml` to redeploy on each tag.
+- [x] **Container:** `Dockerfile` and `.dockerignore`, for any host that runs Docker.
+- [x] **The Space, as a Gradio-SDK Space:** the new-Space form offered only Gradio and Static
+      because ZeroGPU hardware was selected. ZeroGPU allows only Gradio Spaces, and its build caps
+      torch at 2.13, which broke the first build. The app runs on CPU anyway, so the Space must use
+      **CPU basic** (free), not ZeroGPU. A Gradio Space installs `requirements.txt` and runs
+      `python app.py`, which can be any server on port 7860, so the three files in
+      `deploy/huggingface/` run our own app:
+  - `README.md`: the settings header (`sdk: gradio`, `python_version: "3.13"`, `app_file: app.py`)
+  - `requirements.txt`: the app's packages at the `uv.lock` versions, with CPU-only torch as a
+    direct wheel link (no extra index, so it works with pip or uv)
+  - `app.py`: at start-up, downloads the GitHub tag's source, installs GPT-2, and runs `arith-demo`
+  - `.github/workflows/deploy-space.yml` copies them to the Space on each tag.
+- [x] **The Space checked on Linux** (WSL): a fresh Python 3.13 with `requirements.txt` and Gradio
+      6.32.0 installs with no conflicts and no CUDA; `python app.py` in an empty folder downloads
+      `v1.0` from GitHub and serves all 10 encoders after 73 s; every encoder round-trips.
 - [x] **Checked on Linux** (WSL, without Docker):
   - the build steps work: CPU torch with no CUDA, GPT-2 downloads and converts, all 10 models
     preload (GPT-2 in 8 s)
@@ -35,10 +48,15 @@ Done in the code (not yet committed):
 Also done:
 - [x] **Release:** MIT `LICENSE`, `encoder-showcase` merged into `master`, tagged `v1.0` and pushed.
 
+- [x] **The GitHub repo is public.**
+
 Left, all needing you:
-1. **Make the GitHub repo public.**
-2. **Create the Space** (Docker, CPU basic) and add the two files from `deploy/huggingface/`.
-3. **Optional, for automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
+- [x] **The Space is created** with the three files from `deploy/huggingface/`.
+
+Left:
+1. **Switch the Space's hardware to CPU basic:** Settings → Space hardware. Its first build failed on
+   ZeroGPU.
+2. **Optional, for automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
 
 Goal: a public link anyone can open from a LinkedIn post, on a laptop or a phone, that runs the full
 showcase (all four pages, GPT-2 included), plus a GitHub repo that looks good when people click
@@ -68,7 +86,7 @@ that runs containers, or the models move into the browser (option C).
 
 | | What it is | Cost | GPT-2? | Sleeps when idle | Effort |
 |---|---|---|---|---|---|
-| **A. Hugging Face Spaces (Docker)** | a container from a Dockerfile, public URL, built from a git repo | free tier (CPU basic: 2 vCPU, 16 GB RAM) | yes | after ~48 h without visitors (~1 min cold start) | ½–1 day |
+| **A. Hugging Face Spaces** | a Python app (Gradio SDK) or a container (Docker SDK), public URL | free tier (CPU basic: 2 vCPU, 16 GB RAM) | yes | after ~48 h without visitors (~1 min cold start) | ½–1 day |
 | B. Render / Railway / Fly.io | the same container on a general host | free tiers are small (e.g. Render free: 512 MB, sleeps after 15 min) | not on free tiers | yes | ½–1 day |
 | C. Static site + models in the browser | GitHub Pages; models run on the visitor's device (ONNX Runtime Web) | free | too heavy for phones | never | 1–2 weeks |
 
@@ -111,52 +129,21 @@ Space builds from it.
 
 **1. Create the Space**
 
-- [ ] **Create it:** huggingface.co → New Space → SDK "Docker" → public.
-- [ ] **Space files:** the Space repo holds only two files, a `README.md` header and a
-      `Dockerfile`. The Dockerfile clones the GitHub repo at the tag, so no model files need Git
-      LFS on the Space side.
-- [ ] **Private repo?** If the GitHub repo is private, add a read-only token as a Space secret and
-      use it in the clone.
-
-`README.md` (the Space's settings live in its header):
-
-```yaml
----
-title: Arithmetic Coding Showcase
-emoji: 🗜️
-colorFrom: indigo
-colorTo: green
-sdk: docker
-app_port: 7860
----
-Squeezing text into bits with language models and arithmetic coding.
-Code: https://github.com/GalAshkenazi1/ArithmeticCoder
-```
-
-`Dockerfile`:
-
-```dockerfile
-FROM python:3.13-slim
-RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-RUN useradd -m -u 1000 user          # Spaces run the container as user 1000
-USER user
-WORKDIR /home/user
-ARG REF=v1.0                         # the GitHub tag to deploy
-RUN git clone --depth 1 --branch ${REF} https://github.com/GalAshkenazi1/ArithmeticCoder app
-WORKDIR /home/user/app
-RUN uv sync --frozen --no-dev        # CPU-only torch (step 0)
-RUN uv run python training/fetch_gpt2.py   # downloads ~550 MB and converts it into model_bank/gpt2/
-EXPOSE 7860
-CMD ["uv", "run", "--no-sync", "arith-demo", "--host", "0.0.0.0", "--port", "7860"]
-```
+- [ ] **Create it:** huggingface.co → New Space → SDK "Gradio", template "Blank" → hardware
+      **CPU basic**, not ZeroGPU (see the status above) → public.
+- [ ] **Space files:** upload the three files in `deploy/huggingface/`. No model files live in the
+      Space, so it needs no Git LFS.
+- [ ] **Cold start:** about 75 s in the WSL test: the source download, GPT-2's download and
+      conversion, and loading the 10 models. A free Space forgets its disk when it sleeps, so each
+      wake-up repeats this.
 
 **2. Keep it in sync**
 
-- [ ] **Redeploy on each release:** a GitHub Action, triggered by a new tag, bumps `REF` in the
-      Space's Dockerfile and pushes it to the Space, which rebuilds. It needs an HF write token as a
-      GitHub secret.
-- [ ] **Or by hand:** edit `REF` in the Space and save.
+- [ ] **Redeploy on each release:** a GitHub Action, triggered by a new tag, sets `DEFAULT_REF`
+      in the Space's `app.py` and pushes it to the Space, which rebuilds. It needs an HF write token
+      as a GitHub secret.
+- [ ] **Or by hand:** edit `DEFAULT_REF` in the Space's `app.py`, or set a Space variable
+      `ARITH_REF`, then restart the Space.
 
 **3. Check it live**
 

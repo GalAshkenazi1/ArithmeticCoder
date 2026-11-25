@@ -1,5 +1,6 @@
 # Deploy to the Hugging Face Space on every release tag (v1.0, v1.1, ...), or by hand from the Actions tab.
-# The Space rebuilds from deploy/huggingface/Dockerfile with REF set to the tag.
+# It copies deploy/huggingface/ to the Space, with app.py's DEFAULT_REF set to the tag; the Space then
+# rebuilds and serves that tag.
 # Needs a repository secret HF_TOKEN: a Hugging Face access token with write access to the Space.
 # Without it (or before the Space exists) the job skips with a note instead of failing.
 name: Deploy to Hugging Face
@@ -15,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Push the Space's two files, pointing at this ref
+      - name: Push the Space's three files, pointing at this ref
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           REF: ${{ github.ref_name }}
@@ -25,11 +26,12 @@ jobs:
             exit 0
           fi
           git clone "https://GalAshk:${HF_TOKEN}@huggingface.co/spaces/GalAshk/arithmetic-coder" space
-          cp deploy/huggingface/README.md space/README.md
-          sed "s/^ARG REF=.*/ARG REF=${REF}/" deploy/huggingface/Dockerfile > space/Dockerfile
+          cp deploy/huggingface/README.md deploy/huggingface/requirements.txt space/
+          sed "s/^DEFAULT_REF = .*/DEFAULT_REF = \"${REF}\"/" deploy/huggingface/app.py > space/app.py
+          git -C space rm -q --ignore-unmatch Dockerfile
           cd space
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add README.md Dockerfile
+          git add README.md requirements.txt app.py
           git commit -m "Deploy ${REF}" || echo "nothing changed"
           git push

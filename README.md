@@ -66,7 +66,7 @@ src/arithmetic_coder/   backend (Python package)
   p2p/                  peer sessions, wire protocol, relay server, CLI client
   api/                  FastAPI backend for the showcase: /api/models, /api/encode, /api/decode, /api/tokenize (JSON only)
 frontend/               showcase UI, four pages (index = start, encode, compare, encoders): HTML, CSS, JS modules (no build step, no CDN), installable (PWA)
-deploy/                 the Hugging Face Space's Dockerfile and README (built from a GitHub tag)
+deploy/                 the Hugging Face Space's files (it runs a GitHub tag); CPU-only torch for Docker
 model_bank/             models only: <id>/{ckpt.pt, meta.pkl, model.json, train.log}
 training/               separate uv project (CUDA torch): corpora, training recipes, tests
 studies/                experiments and their results
