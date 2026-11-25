@@ -130,7 +130,7 @@ sdk: docker
 app_port: 7860
 ---
 Squeezing text into bits with language models and arithmetic coding.
-Code: https://github.com/galashkenazi1/ArithmeticCoder
+Code: https://github.com/GalAshkenazi1/ArithmeticCoder
 ```
 
 `Dockerfile`:
@@ -143,7 +143,7 @@ RUN useradd -m -u 1000 user          # Spaces run the container as user 1000
 USER user
 WORKDIR /home/user
 ARG REF=v1.0                         # the GitHub tag to deploy
-RUN git clone --depth 1 --branch ${REF} https://github.com/galashkenazi1/ArithmeticCoder app
+RUN git clone --depth 1 --branch ${REF} https://github.com/GalAshkenazi1/ArithmeticCoder app
 WORKDIR /home/user/app
 RUN uv sync --frozen --no-dev        # CPU-only torch (step 0)
 RUN uv run python training/fetch_gpt2.py   # downloads ~550 MB and converts it into model_bank/gpt2/

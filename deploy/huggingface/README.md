@@ -17,6 +17,6 @@ letter, and the better it guesses, the fewer bits the message needs. Watch it en
 step, compare two encoders, and meet the ten encoders (from a 0.8M-parameter Shakespeare model to
 GPT-2).
 
-Code, studies and how it works: https://github.com/galashkenazi1/ArithmeticCoder
+Code, studies and how it works: https://github.com/GalAshkenazi1/ArithmeticCoder
 
 This Space builds from a tagged release of that repository (see its `deploy/huggingface/`).

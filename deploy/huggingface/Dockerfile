@@ -10,7 +10,7 @@ USER user
 ENV HOME=/home/user UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 UV_PYTHON_DOWNLOADS=never
 
 ARG REF=v1.0
-RUN git clone --depth 1 --branch ${REF} https://github.com/galashkenazi1/ArithmeticCoder /home/user/app
+RUN git clone --depth 1 --branch ${REF} https://github.com/GalAshkenazi1/ArithmeticCoder /home/user/app
 WORKDIR /home/user/app
 # torch's CPU-only build on Linux (see deploy/torch-cpu.toml); every other version stays as pinned
 RUN cat deploy/torch-cpu.toml >> pyproject.toml && uv lock && uv sync --frozen --no-dev
