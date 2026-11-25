@@ -1,5 +1,24 @@
 {
   "name": "Shakespeare-GPT",
   "description": "0.8M-param char-level nanoGPT trained on Tiny Shakespeare",
-  "kind": "nanogpt"
+  "kind": "nanogpt",
+  "dataset": {
+    "name": "Tiny Shakespeare",
+    "about": "about 40,000 lines of Shakespeare's plays: a speaker's name in capitals, then their lines",
+    "url": "https://github.com/karpathy/char-rnn/tree/master/data/tinyshakespeare",
+    "chars": 1115394
+  },
+  "examples": [
+    "KING HENRY:\nWhat say you, lords? Shall we to France tonight?",
+    "My gracious lord, I pray thee, hear me speak."
+  ],
+  "training": {
+    "corpus": "shakespeare",
+    "corpus_chars": 1115394,
+    "vocab": "shakespeare",
+    "params": 804224,
+    "iters": 2000,
+    "block_size": 128,
+    "val_bits_per_char": 2.69
+  }
 }

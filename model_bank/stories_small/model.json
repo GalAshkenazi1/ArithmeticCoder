@@ -2,6 +2,16 @@
   "name": "TinyStories-GPT",
   "description": "3.2M-param char nanoGPT trained on short stories in simple English (TinyStories)",
   "kind": "nanogpt",
+  "dataset": {
+    "name": "TinyStories",
+    "about": "short stories in simple English, written by GPT-4 for small children",
+    "url": "https://huggingface.co/datasets/roneneldan/TinyStories",
+    "chars": 12000000
+  },
+  "examples": [
+    "Once upon a time, there was a little cat named Tom. He liked to play in the sun.",
+    "Lily was sad because she lost her ball. Her mom said, \"Let's look for it together!\""
+  ],
   "training": {
     "corpus": "tinystories",
     "corpus_chars": 12000000,

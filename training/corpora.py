@@ -27,6 +27,30 @@ C4_URL = "https://huggingface.co/datasets/allenai/c4/resolve/main/en/c4-validati
 
 MAX_CHARS = 12_000_000  # cap per corpus (train + validation)
 
+# what each corpus is, for model.json "dataset" (shown on the showcase's encoders page)
+CORPUS_INFO = {
+    "shakespeare": {"name": "Tiny Shakespeare",
+                    "about": "about 40,000 lines of Shakespeare's plays: a speaker's name in capitals, then their lines",
+                    "url": "https://github.com/karpathy/char-rnn/tree/master/data/tinyshakespeare"},
+    "gutenberg": {"name": "Project Gutenberg novels",
+                  "about": "five 19th-century novels: Pride and Prejudice, The Adventures of Sherlock Holmes, "
+                           "A Tale of Two Cities, Frankenstein and Alice's Adventures in Wonderland",
+                  "url": "https://www.gutenberg.org"},
+    "wikitext": {"name": "WikiText-2",
+                 "about": "good and featured Wikipedia articles (history, science, sport, music), "
+                          "with section titles written as = = Heading = =",
+                 "url": "https://huggingface.co/datasets/Salesforce/wikitext"},
+    "tinystories": {"name": "TinyStories",
+                    "about": "short stories in simple English, written by GPT-4 for small children",
+                    "url": "https://huggingface.co/datasets/roneneldan/TinyStories"},
+    "c4": {"name": "C4 (Colossal Clean Crawled Corpus)",
+           "about": "English web pages (shops, news, blogs, how-tos), cleaned of menus and boilerplate",
+           "url": "https://huggingface.co/datasets/allenai/c4"},
+    "python": {"name": "Python standard library",
+               "about": "the source code of Python's own standard library: code, comments and docstrings",
+               "url": "https://github.com/python/cpython/tree/main/Lib"},
+}
+
 # typography -> ASCII, applied before dropping characters outside the vocabulary
 _TYPOGRAPHY = {
     "‘": "'", "’": "'", "‚": "'", "‛": "'",

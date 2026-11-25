@@ -1,10 +1,36 @@
-# arithmetic-coder
+# Fewer bits, by guessing the next letter
 
-Arithmetic coding of text with character-level language models: a proof of concept for sending
-compact messages between two peers who share a model and a secret key.
+**Arithmetic coding with language models, step by step.** A model guesses each next letter; the better
+it guesses, the fewer bits the message needs. A 0.8M-parameter Shakespeare model sends
+*“To be, or not to be, that is the question:”* in 90 bits instead of 336; GPT-2 needs 52.
 
-The better the model predicts a message, the fewer bits it needs. A small Shakespeare model sends
-Shakespeare-style text at about 2.5 bits per character, against 8 for plain text.
+**▶ Live demo: https://galashk-arithmetic-coder.hf.space** (works on phones too, and can be added to
+the home screen)
+
+![The model's guesses spread over the range: "Word" in 12 bits](docs/images/word-animation.gif)
+
+| Start: characters, symbols, bits | Encode: watch every symbol shrink the range |
+|---|---|
+| ![start page](docs/images/start.png) | ![encode page](docs/images/encode.png) |
+| **Compare: two encoders, per character** | **The encoders: four families, ten models** |
+| ![compare page](docs/images/compare.png) | ![encoders page](docs/images/encoders.png) |
+
+What's inside:
+
+- **An exact arithmetic coder:** integer arithmetic, no floating-point drift. A test checks that
+  every encoding decodes back to the same text.
+- **Ten encoders in four families:**
+  - character models trained on plays, novels, Wikipedia, children's stories and Python
+  - byte and word models trained on web text
+  - OpenAI's GPT-2, loaded into our own nanoGPT code with our own byte-pair-encoding tokenizer
+    (no `transformers` dependency)
+  - two no-model baselines
+- **A web showcase** (FastAPI + plain JS, no build step), with an animated explainer, a coding
+  ladder, a receiver that decodes the bits, a 1-v-1 comparison and a guided tour.
+- **Five studies** comparing the models: [studies/](studies/). Plain-language background:
+  [what a character, a symbol and a bit are](deliberates/model_families.md).
+- **A peer-to-peer CLI chat** that sends messages as arithmetic-coded bits, with a key-derived
+  permutation.
 
 ## Setup
 
@@ -12,11 +38,16 @@ Shakespeare-style text at about 2.5 bits per character, against 8 for plain text
 uv sync --all-groups
 ```
 
+Or run the whole showcase, GPT-2 included, in a container: `docker build -t arithmetic-coder .`, then
+`docker run -p 7860:7860 arithmetic-coder` and open http://localhost:7860. The live demo is the same
+image, built on Hugging Face Spaces from a release tag: see [deploy/](deploy/) and
+[deliberates/deploy_plan.md](deliberates/deploy_plan.md).
+
 ## Run
 
 | what | command |
 |---|---|
-| Interactive web demo (Alice and Bob, animated encoder) | `uv run arith-demo`, then open http://127.0.0.1:8000 |
+| Encoder showcase: an animated start page (characters, symbols, bits), then encode, compare two encoders, meet the families | `uv run arith-demo`, then open http://127.0.0.1:8000 |
 | Chat relay (forwards messages, never sees text or keys) | `uv run arith-relay` |
 | Command-line chat client | `uv run arith-chat --user alice`, then `/add bob shakespeare_char <key>` |
 | Tests | `uv run pytest` |
@@ -33,8 +64,9 @@ src/arithmetic_coder/   backend (Python package)
   coding/               exact arithmetic coder, key-derived permutation, encoding trace
   models/               model wrappers, vendored nanoGPT definition, model registry
   p2p/                  peer sessions, wire protocol, relay server, CLI client
-  api/                  FastAPI backend for the web demo (JSON only)
-frontend/               web demo UI: HTML, CSS, JS modules (no build step)
+  api/                  FastAPI backend for the showcase: /api/models, /api/encode, /api/decode, /api/tokenize (JSON only)
+frontend/               showcase UI, four pages (index = start, encode, compare, encoders): HTML, CSS, JS modules (no build step, no CDN), installable (PWA)
+deploy/                 the Hugging Face Space's Dockerfile and README (built from a GitHub tag)
 model_bank/             models only: <id>/{ckpt.pt, meta.pkl, model.json, train.log}
 training/               separate uv project (CUDA torch): corpora, training recipes, tests
 studies/                experiments and their results
@@ -52,6 +84,13 @@ built-in uniform baselines need no files: `uniform` (the 65 Shakespeare characte
 ```json
 { "name": "Shakespeare-GPT", "description": "0.8M-param char-level nanoGPT trained on Tiny Shakespeare", "kind": "nanogpt" }
 ```
+
+Optional fields feed the showcase's encoders page: `"dataset"` (`name`, `about`, `url`, `chars`), `"examples"`
+(typical sentences in the style it was trained on) and `"training"` (`params`, `block_size`, `val_bits_per_char`).
+`training/train.py` writes all three from its recipes. `"showcase": false` keeps a model out of the
+showcase's lists (it still works by id, and the studies use it): `web_small`, `wiki_bytes` and the
+65-character `uniform` are hidden because another encoder already covers each one. How the families
+differ, and what a symbol, a character and a bit are: [deliberates/model_families.md](deliberates/model_families.md).
 
 ### Tokenizers
 
@@ -126,3 +165,15 @@ that the model loads.
     grows with bigger models and higher precision.
 - **This is a POC, not secure messaging.** The key permutation only hides the encoding, keys are
   stored in plain text, and the relay has no authentication.
+
+
+## Credits
+
+- **GPT-2:** OpenAI, MIT licence ([openai-community/gpt2](https://huggingface.co/openai-community/gpt2)).
+- **nanoGPT model code:** Andrej Karpathy, MIT licence (vendored in `src/arithmetic_coder/models/nanogpt.py`).
+- **Training text**, each under its own terms:
+  - [Tiny Shakespeare](https://github.com/karpathy/char-rnn) and [Project Gutenberg](https://www.gutenberg.org) novels: public domain texts
+  - [WikiText-2](https://huggingface.co/datasets/Salesforce/wikitext): CC BY-SA
+  - [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories): CDLA-Sharing-1.0
+  - [C4](https://huggingface.co/datasets/allenai/c4): ODC-BY
+  - the Python standard library's source: PSF licence

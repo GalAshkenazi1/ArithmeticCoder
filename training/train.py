@@ -25,7 +25,7 @@ from arithmetic_coder.models.registry import bank_dir
 from arithmetic_coder.tokenizers import CharTokenizer
 from arithmetic_coder.tokenizers.bytes import ByteTokenizer
 from arithmetic_coder.tokenizers.words import WordTokenizer, build_word_list
-from corpora import load_corpus, vocabulary
+from corpora import CORPUS_INFO, load_corpus, vocabulary
 
 SIZES = {
     "tiny": dict(n_layer=4, n_head=4, n_embd=128, block_size=128, dropout=0.1, bias=False),   # ~0.8M params
@@ -50,36 +50,58 @@ class Recipe:
     warmup_iters: int = 200
     tokenizer: str = "char"  # "char", "bytes" or "words"
     words: int = 4096        # word-list size for the "words" tokenizer
+    examples: tuple[str, ...] = ()  # typical sentences in the corpus's style (shown on the encoders page)
+    showcase: bool = True    # False: kept for the studies, but not listed in the web showcase
 
 
 RECIPES = {
     # the two original models (trained with these settings through nanoGPT's train.py; kept for reference)
     "shakespeare_char": Recipe("shakespeare", "shakespeare", "tiny", "Shakespeare-GPT",
                                "{params}-param char-level nanoGPT trained on Tiny Shakespeare",
-                               batch_size=24, max_iters=2000, warmup_iters=100),
+                               batch_size=24, max_iters=2000, warmup_iters=100,
+                               examples=("KING HENRY:\nWhat say you, lords? Shall we to France tonight?",
+                                         "My gracious lord, I pray thee, hear me speak.")),
     "english_char": Recipe("gutenberg", "shakespeare", "tiny", "English-GPT",
                            "same architecture, trained on 19th-century Gutenberg prose "
                            "(Austen, Doyle, Dickens, Shelley, Carroll)",
-                           batch_size=24, max_iters=2000, warmup_iters=100),
+                           batch_size=24, max_iters=2000, warmup_iters=100,
+                           examples=("'I am quite sure,' said Elizabeth, 'that he never meant to be unkind.'",
+                                     "'My dear,' said Mrs. Bennet, 'you must not be so very unkind to your sister.'")),
     # the ASCII models: one per kind of text
     "wiki_small": Recipe("wikitext", "ascii", "small", "Wiki-GPT",
-                         "{params}-param char nanoGPT trained on Wikipedia articles (WikiText-2)"),
+                         "{params}-param char nanoGPT trained on Wikipedia articles (WikiText-2)",
+                         examples=("The station was opened in 1887 by the Great Western Railway and closed in 1964.",
+                                   "= = Early life = =\nHe was born in Glasgow and studied law at the University "
+                                   "of Edinburgh.")),
     "stories_small": Recipe("tinystories", "ascii", "small", "TinyStories-GPT",
-                            "{params}-param char nanoGPT trained on short stories in simple English (TinyStories)"),
+                            "{params}-param char nanoGPT trained on short stories in simple English (TinyStories)",
+                            examples=("Once upon a time, there was a little cat named Tom. He liked to play in the sun.",
+                                      "Lily was sad because she lost her ball. Her mom said, \"Let's look for it "
+                                      "together!\"")),
     "web_small": Recipe("c4", "ascii", "small", "Web-GPT",
-                        "{params}-param char nanoGPT trained on modern web text (C4)"),
+                        "{params}-param char nanoGPT trained on modern web text (C4)", showcase=False,
+                        examples=("Click here to read more about our free shipping offer.",
+                                  "We are a family-owned business serving the community for over 20 years.")),
     "python_small": Recipe("python", "ascii", "small", "Python-GPT",
-                           "{params}-param char nanoGPT trained on Python source code (the standard library)"),
+                           "{params}-param char nanoGPT trained on Python source code (the standard library)",
+                           examples=("def __init__(self, name, value=None):\n    self.name = name",
+                                     "if not isinstance(key, str):\n    raise TypeError('key must be a string')")),
     # other tokenizations, same core size and training budget (compare with web_small / wiki_small)
     "web_bytes": Recipe("c4", "utf8", "small", "Web-Bytes",
                         "{params}-param nanoGPT over UTF-8 bytes, trained on web text (C4, Unicode kept)",
-                        tokenizer="bytes"),
+                        tokenizer="bytes",
+                        examples=("Our café is open Monday to Friday, from 9:00 to 17:00.",
+                                  "Free shipping on all orders over €50 – shop now!")),
     "wiki_bytes": Recipe("wikitext", "utf8", "small", "Wiki-Bytes",
                          "{params}-param nanoGPT over UTF-8 bytes, trained on Wikipedia (WikiText-2)",
-                         tokenizer="bytes"),
+                         tokenizer="bytes", showcase=False,
+                         examples=("Marie Curie was born in Warsaw in 1867 and moved to Paris in 1891.",
+                                   "The Zürich Opera House was designed by Fellner & Helmer and opened in 1891.")),
     "web_words": Recipe("c4", "utf8", "small", "Web-Words",
                         "{params}-param nanoGPT over 4,096 whole words + byte escape, trained on web text (C4)",
-                        tokenizer="words"),
+                        tokenizer="words",
+                        examples=("Please contact us for more information about our services.",
+                                  "The new website will be available for all users this year.")),
 }
 
 
@@ -214,6 +236,9 @@ def train(model_id: str, device: str, max_iters: int | None = None, max_chars: i
         "kind": "nanogpt",
         "tokenizer": {"kind": tokenizer.kind},
         "vocab_size": vocab_size,
+        **({} if recipe.showcase else {"showcase": False}),
+        "dataset": {**CORPUS_INFO[recipe.corpus], "chars": len(text)},
+        "examples": list(recipe.examples),
         "training": {
             "corpus": recipe.corpus, "corpus_chars": len(text), "vocab": recipe.vocab, "params": params,
             "iters": iters, "batch_size": batch, "block_size": block,

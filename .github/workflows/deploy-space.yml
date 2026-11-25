@@ -1,0 +1,30 @@
+# Deploy to the Hugging Face Space on every release tag (v1.0, v1.1, ...), or by hand from the Actions tab.
+# The Space rebuilds from deploy/huggingface/Dockerfile with REF set to the tag.
+# Needs a repository secret HF_TOKEN: a Hugging Face access token with write access to the Space.
+name: Deploy to Hugging Face
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push the Space's two files, pointing at this ref
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          REF: ${{ github.ref_name }}
+        run: |
+          git clone "https://GalAshk:${HF_TOKEN}@huggingface.co/spaces/GalAshk/arithmetic-coder" space
+          cp deploy/huggingface/README.md space/README.md
+          sed "s/^ARG REF=.*/ARG REF=${REF}/" deploy/huggingface/Dockerfile > space/Dockerfile
+          cd space
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add README.md Dockerfile
+          git commit -m "Deploy ${REF}" || echo "nothing changed"
+          git push

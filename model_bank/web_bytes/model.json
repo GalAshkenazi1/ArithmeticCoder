@@ -6,6 +6,16 @@
     "kind": "bytes"
   },
   "vocab_size": 256,
+  "dataset": {
+    "name": "C4 (Colossal Clean Crawled Corpus)",
+    "about": "English web pages (shops, news, blogs, how-tos), cleaned of menus and boilerplate",
+    "url": "https://huggingface.co/datasets/allenai/c4",
+    "chars": 12000000
+  },
+  "examples": [
+    "Our café is open Monday to Friday, from 9:00 to 17:00.",
+    "Free shipping on all orders over €50 – shop now!"
+  ],
   "training": {
     "corpus": "c4",
     "corpus_chars": 12000000,

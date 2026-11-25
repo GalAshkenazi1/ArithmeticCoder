@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compare encoders</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%237b6ee6'/%3E%3Crect x='3' y='7' width='10' height='2' rx='1' fill='%23fff'/%3E%3Ccircle cx='9' cy='8' r='2' fill='%230ca30c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b0f17">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <header class="page-header">
+    <nav class="tabs" aria-label="pages">
+      <a href="./">Start</a><a href="encode.html">Encode</a><a href="compare.html" aria-current="page">Compare</a><a href="encoders.html">The encoders</a>
+    </nav>
+    <h1>Compare</h1>
+    <p>Two <span class="term" data-term="encoder">encoders</span>, one text: which needs fewer <span class="term" data-term="bit">bits</span>, and where does each one pay?</p>
+  </header>
+
+  <main class="frame">
+    <div class="compare-grid">
+
+      <!-- left: the two encoders and the text -->
+      <aside class="compare-left" aria-label="encoders and text">
+        <div class="box-title">Choose two encoders</div>
+        <div class="duel">
+          <div class="duel-card" id="card-top"><div class="picker"></div><div class="duel-result"></div></div>
+          <button id="btn-swap" type="button" class="swap" title="swap the two encoders">&#8645; swap</button>
+          <div class="duel-card" id="card-bottom"><div class="picker"></div><div class="duel-result"></div></div>
+        </div>
+        <label class="box-title" for="text-input">Write in</label>
+        <textarea id="text-input" rows="3" maxlength="280" spellcheck="false" placeholder="type here…"></textarea>
+        <div class="examples story" id="examples"></div>
+        <p id="example-note" class="example-note"></p>
+        <p id="input-error" class="error" role="alert"></p>
+        <span id="busy" class="busy" hidden>encoding…</span>
+        <p id="verdict" class="verdict" aria-live="polite"></p>
+        <p id="insight" class="insight"></p>
+      </aside>
+
+      <!-- right: cost per character (mirrored around the text) and the running total -->
+      <section class="compare-right" aria-label="charts">
+        <figure class="chart">
+          <figcaption>Cost per character <span><span class="term" data-term="bpc">bits/char</span> · one bar per <span class="term" data-term="symbol">symbol</span>, as wide as the characters it covers · each word is tinted by the encoder that paid less for it</span></figcaption>
+          <div class="mirror-wrap">
+            <div id="mirror-scroll" class="mirror-scroll graph-area"><svg id="mirror-svg" role="img" aria-label="bits per character for both encoders"></svg></div>
+            <div class="play-col">
+              <button id="play-top" type="button" class="play-model">&#9654;</button>
+              <button id="play-bottom" type="button" class="play-model">&#9654;</button>
+            </div>
+          </div>
+          <div id="mirror-tooltip" class="tooltip" hidden></div>
+        </figure>
+        <figure class="chart">
+          <figcaption>Total cost <span><span class="term" data-term="bits-sent">bits</span> used so far</span></figcaption>
+          <div id="cum-area" class="graph-area chart-area"><svg id="cum-svg" role="img" aria-label="bits used so far for both encoders"></svg></div>
+          <div id="cum-tooltip" class="tooltip" hidden></div>
+        </figure>
+      </section>
+    </div>
+
+    <!-- the coding animation of one encoder (opened with its play button) -->
+    <section id="anim" class="encoder-panel anim-panel" aria-label="coding animation" hidden>
+      <div class="panel-top">
+        <div class="anim-who">
+          <span class="avatar" id="anim-avatar"></span>
+          <div><div class="anim-title" id="anim-title"></div><div class="anim-sub">coding animation: each line zooms into the chosen symbol's slice of the line above</div></div>
+        </div>
+        <div class="playback" aria-label="playback">
+          <button id="btn-replay" type="button" title="replay from the first symbol">&#8634;</button>
+          <button id="btn-back" type="button" title="previous symbol">&#9664;</button>
+          <button id="btn-play" type="button" class="play" title="play / pause">&#9654;</button>
+          <button id="btn-forward" type="button" title="next symbol">&#9654;</button>
+          <span id="step-label" class="step-label">0 / 0</span>
+          <div class="speed" id="speed" role="group" aria-label="speed">
+            <button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1" class="active">1×</button><button type="button" data-speed="2">2×</button><button type="button" data-speed="4">4×</button>
+          </div>
+          <div id="view-toggle"></div>
+          <button id="anim-close" type="button" class="anim-close" title="close the animation">&times;</button>
+        </div>
+      </div>
+      <div id="ladder" class="ladder"></div>
+    </section>
+  </main>
+</div>
+<script type="module" src="js/compare.js"></script>
+</body>
+</html>

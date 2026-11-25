@@ -2,6 +2,16 @@
   "name": "Python-GPT",
   "description": "3.2M-param char nanoGPT trained on Python source code (the standard library)",
   "kind": "nanogpt",
+  "dataset": {
+    "name": "Python standard library",
+    "about": "the source code of Python's own standard library: code, comments and docstrings",
+    "url": "https://github.com/python/cpython/tree/main/Lib",
+    "chars": 11901068
+  },
+  "examples": [
+    "def __init__(self, name, value=None):\n    self.name = name",
+    "if not isinstance(key, str):\n    raise TypeError('key must be a string')"
+  ],
   "training": {
     "corpus": "python",
     "corpus_chars": 11901068,
