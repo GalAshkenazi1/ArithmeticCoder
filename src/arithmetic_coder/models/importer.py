@@ -21,17 +21,18 @@ from arithmetic_coder.models.registry import ASCII_VOCAB, ModelBankError, bank_d
 _ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_]{0,40}$")
 
 
-def write_model_folder(folder: Path, state_dict: dict, model_args: dict, vocab: list[str], info: dict,
+def write_model_folder(folder: Path, state_dict: dict, model_args: dict, vocab: list[str] | None, info: dict,
                        extra: dict | None = None) -> None:
-    """Write ckpt.pt (weights + model_args only), meta.pkl and model.json into folder."""
+    """Write ckpt.pt (weights + model_args only), meta.pkl (char vocab, if given) and model.json."""
     import torch
 
     folder.mkdir(parents=True, exist_ok=True)
     torch.save({"model": state_dict, "model_args": model_args, **(extra or {})}, folder / "ckpt.pt")
-    with open(folder / "meta.pkl", "wb") as f:
-        pickle.dump({"vocab_size": len(vocab), "itos": dict(enumerate(vocab)),
-                     "stoi": {c: i for i, c in enumerate(vocab)}}, f)
-    (folder / "model.json").write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
+    if vocab is not None:
+        with open(folder / "meta.pkl", "wb") as f:
+            pickle.dump({"vocab_size": len(vocab), "itos": dict(enumerate(vocab)),
+                         "stoi": {c: i for i, c in enumerate(vocab)}}, f)
+    (folder / "model.json").write_text(json.dumps(info, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def import_model(ckpt_path: Path, model_id: str, name: str, description: str,
@@ -62,7 +63,7 @@ def import_model(ckpt_path: Path, model_id: str, name: str, description: str,
     write_model_folder(folder, state_dict, model_args, vocab,
                        {"name": name, "description": description, "kind": "nanogpt", "imported_from": str(ckpt_path)})
     try:
-        probs = load_model_uncached(model_id).get_char_probs("")
+        probs = load_model_uncached(model_id).get_probs([])
         if len(probs) != len(vocab) or abs(sum(probs) - 1) > 1e-6:
             raise ModelBankError("the imported model doesn't produce a valid distribution")
     except Exception:

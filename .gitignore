@@ -9,3 +9,5 @@ model_bank/nanoGPT/
 training/_downloads/
 training/_data/
 !model_bank/*/train.log
+studies/_cache/
+model_bank/gpt2/ckpt.pt

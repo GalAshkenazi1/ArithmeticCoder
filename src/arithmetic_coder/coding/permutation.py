@@ -1,10 +1,8 @@
+"""Key-derived permutation of the symbol slots: peers sharing a key lay out [0, 1) the same secret way."""
 from __future__ import annotations
 
 import hashlib
-from typing import TYPE_CHECKING, Iterator
-
-if TYPE_CHECKING:  # type hints only, so importing this module doesn't load torch
-    from arithmetic_coder.models.wrappers import ModelWrapper
+from typing import Iterator
 
 _DOMAIN = b"arithmetic-coder/permutation/v1"
 
@@ -40,36 +38,8 @@ def derive_permutation(key: bytes | str, n: int) -> list[int]:
     return perm
 
 
-class PermutedModel:
-    """Wraps a char model so its vocab and probabilities come out in a secret (permuted) slot order."""
+def keyed_coder(model, key: bytes | str, precision_bits: int | None = None):
+    """An ArithmeticCoder whose symbol slots are laid out in the order derived from a shared key."""
+    from arithmetic_coder.coding.encdec import ArithmeticCoder
 
-    def __init__(self, 
-                 inner: ModelWrapper, 
-                 perm: list[int]):
-        """Store the inner model and the permutation (slot i holds the inner model's character perm[i])."""
-        inner_vocab = inner.get_vocab()
-        if sorted(perm) != list(range(len(inner_vocab))):
-            raise ValueError(f"perm must be a permutation of range({len(inner_vocab)})")
-        self.inner = inner
-        self.perm = list(perm)
-        self.vocab = [inner_vocab[j] for j in self.perm]
-
-    @classmethod
-    def from_key(cls, 
-                 inner: ModelWrapper, 
-                 key: bytes | str) -> "PermutedModel":
-        """Build a PermutedModel whose permutation is derived from the users' shared key."""
-        return cls(inner, derive_permutation(key, len(inner.get_vocab())))
-
-    def get_vocab(self) -> list[str]:
-        """Return the vocabulary in permuted slot order."""
-        return self.vocab
-
-    def model_digest(self) -> bytes:
-        """Return the inner model's digest (the permutation shows up in the vocab order the coder hashes)."""
-        return self.inner.model_digest()
-
-    def get_char_probs(self, prefix: str) -> list[float]:
-        """Return the inner model's next-char probabilities in permuted slot order."""
-        p = self.inner.get_char_probs(prefix)
-        return [p[j] for j in self.perm]
+    return ArithmeticCoder(model, precision_bits, derive_permutation(key, len(model.tokenizer.vocab)))

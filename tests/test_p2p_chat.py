@@ -109,4 +109,4 @@ def test_errors(users):
         with pytest.raises(CorruptedPayloadError):
             bob.receive_from("alice", frame)
     with pytest.raises(ValueError, match="already has a session"):
-        alice.register_peer("bob", alice.sessions["bob"].coder.modelwrapper.inner, KEY_BOB)
+        alice.register_peer("bob", alice.sessions["bob"].coder.modelwrapper, KEY_BOB)

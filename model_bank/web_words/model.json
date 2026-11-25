@@ -1,0 +1,25 @@
+{
+  "name": "Web-Words",
+  "description": "4.3M-param nanoGPT over 4,096 whole words + byte escape, trained on web text (C4)",
+  "kind": "nanogpt",
+  "tokenizer": {
+    "kind": "words"
+  },
+  "vocab_size": 4352,
+  "training": {
+    "corpus": "c4",
+    "corpus_chars": 12000000,
+    "vocab": "utf8",
+    "params": 4262144,
+    "iters": 4000,
+    "batch_size": 64,
+    "block_size": 128,
+    "chars_per_symbol": 2.085,
+    "best_val_loss_nats": 2.7457,
+    "val_bits_per_char": 1.9,
+    "device": "cuda NVIDIA GeForce GTX 1650",
+    "precision": "float32",
+    "torch": "2.15.0+cu132",
+    "minutes": 12.2
+  }
+}

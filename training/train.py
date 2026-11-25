@@ -22,6 +22,9 @@ import torch
 from arithmetic_coder.models.importer import write_model_folder
 from arithmetic_coder.models.nanogpt import GPT, GPTConfig
 from arithmetic_coder.models.registry import bank_dir
+from arithmetic_coder.tokenizers import CharTokenizer
+from arithmetic_coder.tokenizers.bytes import ByteTokenizer
+from arithmetic_coder.tokenizers.words import WordTokenizer, build_word_list
 from corpora import load_corpus, vocabulary
 
 SIZES = {
@@ -36,7 +39,7 @@ class Recipe:
     """How to build one model. {params} in the description is filled in after training."""
 
     corpus: str
-    vocab: str      # "shakespeare" (65 chars) or "ascii" (96 chars)
+    vocab: str      # corpus cleaning: "shakespeare" (65 chars), "ascii" (96 chars) or "utf8" (keep Unicode)
     size: str       # key of SIZES
     name: str
     description: str
@@ -45,6 +48,8 @@ class Recipe:
     learning_rate: float = 1e-3
     min_lr: float = 1e-4
     warmup_iters: int = 200
+    tokenizer: str = "char"  # "char", "bytes" or "words"
+    words: int = 4096        # word-list size for the "words" tokenizer
 
 
 RECIPES = {
@@ -65,6 +70,16 @@ RECIPES = {
                         "{params}-param char nanoGPT trained on modern web text (C4)"),
     "python_small": Recipe("python", "ascii", "small", "Python-GPT",
                            "{params}-param char nanoGPT trained on Python source code (the standard library)"),
+    # other tokenizations, same core size and training budget (compare with web_small / wiki_small)
+    "web_bytes": Recipe("c4", "utf8", "small", "Web-Bytes",
+                        "{params}-param nanoGPT over UTF-8 bytes, trained on web text (C4, Unicode kept)",
+                        tokenizer="bytes"),
+    "wiki_bytes": Recipe("wikitext", "utf8", "small", "Wiki-Bytes",
+                         "{params}-param nanoGPT over UTF-8 bytes, trained on Wikipedia (WikiText-2)",
+                         tokenizer="bytes"),
+    "web_words": Recipe("c4", "utf8", "small", "Web-Words",
+                        "{params}-param nanoGPT over 4,096 whole words + byte escape, trained on web text (C4)",
+                        tokenizer="words"),
 }
 
 
@@ -76,8 +91,28 @@ def encode_text(text: str, vocab: list[str]) -> np.ndarray:
     return table[np.frombuffer(text.encode("ascii"), dtype=np.uint8)]
 
 
+def build_tokenizer(recipe: Recipe, train_text: str):
+    """The recipe's tokenizer; a word list is learned from the training split only."""
+    if recipe.tokenizer == "char":
+        return CharTokenizer(vocabulary(recipe.vocab))
+    if recipe.tokenizer == "bytes":
+        return ByteTokenizer()
+    if recipe.tokenizer == "words":
+        return WordTokenizer(build_word_list(train_text, recipe.words))
+    raise ValueError(f"unknown tokenizer {recipe.tokenizer!r}")
+
+
+def encode_ids(tokenizer, text: str) -> np.ndarray:
+    """The text as symbol ids (fast paths for characters and bytes)."""
+    if tokenizer.kind == "char":
+        return encode_text(text, tokenizer.vocab).astype(np.int32)
+    if tokenizer.kind == "bytes":
+        return np.frombuffer(text.encode("utf-8"), dtype=np.uint8).astype(np.int32)
+    return np.array(tokenizer.encode(text), dtype=np.int32)
+
+
 def train(model_id: str, device: str, max_iters: int | None = None, max_chars: int | None = None,
-          force: bool = False) -> None:
+          force: bool = False, amp: bool = False) -> None:
     """Train one recipe and install it into the model bank."""
     recipe = RECIPES[model_id]
     final, tmp = bank_dir() / model_id, bank_dir() / f".{model_id}.training"
@@ -91,24 +126,28 @@ def train(model_id: str, device: str, max_iters: int | None = None, max_chars: i
         print(message, flush=True)
         log_file.write(message + "\n")
 
-    vocab = vocabulary(recipe.vocab)
     text = load_corpus(recipe.corpus, recipe.vocab, **({"max_chars": max_chars} if max_chars else {}))
-    ids = encode_text(text, vocab)
-    split = int(0.9 * len(ids))
-    data = {"train": torch.from_numpy(ids[:split].copy()).to(device),
-            "val": torch.from_numpy(ids[split:].copy()).to(device)}
+    char_split = int(0.9 * len(text))  # same train/validation text for every tokenization
+    tokenizer = build_tokenizer(recipe, text[:char_split])
+    train_ids, val_ids = encode_ids(tokenizer, text[:char_split]), encode_ids(tokenizer, text[char_split:])
+    data = {"train": torch.from_numpy(train_ids).to(device), "val": torch.from_numpy(val_ids).to(device)}
+    vocab_size = len(tokenizer.vocab)
     size = SIZES[recipe.size]
     block, batch = size["block_size"], recipe.batch_size
     iters = max_iters or recipe.max_iters
     gpu = torch.cuda.get_device_name(0) if device == "cuda" else "-"
-    log(f"{model_id}: corpus {recipe.corpus} ({len(text):,} chars, vocab {len(vocab)}), size {recipe.size}, "
-        f"{iters} iters x batch {batch} x block {block}, device {device} {gpu}")
+    chars_per_symbol = len(text) / (len(train_ids) + len(val_ids))
+    val_chars_per_symbol = (len(text) - char_split) / len(val_ids)  # converts loss per symbol to bits per char
+    log(f"{model_id}: corpus {recipe.corpus} ({len(text):,} chars), tokenizer {tokenizer.kind} (vocab {vocab_size}, "
+        f"{chars_per_symbol:.2f} chars/symbol), size {recipe.size}, {iters} iters x batch {batch} x block {block}, "
+        f"device {device} {gpu}")
 
     torch.manual_seed(1337)
-    model = GPT(GPTConfig(vocab_size=len(vocab), **size)).to(device)
+    model = GPT(GPTConfig(vocab_size=vocab_size, **size)).to(device)
     params = sum(p.numel() for p in model.parameters()) - model.transformer.wpe.weight.numel()
     optimizer = model.configure_optimizers(0.1, recipe.learning_rate, (0.9, 0.99), "cuda" if device == "cuda" else "cpu")
-    use_amp = device == "cuda"  # float16 autocast + loss scaling (Turing GPUs have no bfloat16)
+    # float16 autocast is opt-in: on a GTX 1650 it is 3.5x *slower* than float32 (no tensor cores)
+    use_amp = amp and device == "cuda"
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
     autocast = (lambda: torch.autocast("cuda", dtype=torch.float16)) if use_amp else nullcontext
     offsets = torch.arange(block, device=device)
@@ -144,8 +183,8 @@ def train(model_id: str, device: str, max_iters: int | None = None, max_chars: i
     for it in range(iters + 1):
         if it % EVAL_INTERVAL == 0 or it == iters:
             losses = estimate_loss()
-            log(f"step {it}: train {losses['train']:.4f}, val {losses['val']:.4f} nats "
-                f"({losses['val'] / math.log(2):.3f} bits/char)")
+            log(f"step {it}: train {losses['train']:.4f}, val {losses['val']:.4f} nats/symbol "
+                f"({losses['val'] / math.log(2) / val_chars_per_symbol:.3f} bits/char)")
             if losses["val"] < best_val:
                 best_val = losses["val"]
                 best_state = {k: v.detach().float().cpu().clone() for k, v in model.state_dict().items()}
@@ -168,20 +207,27 @@ def train(model_id: str, device: str, max_iters: int | None = None, max_chars: i
             log(f"iter {it}: loss {loss.item():.4f}, {ms:.0f} ms/iter")
 
     minutes = (time.time() - start) / 60
+    bits_per_char = best_val / math.log(2) / val_chars_per_symbol
     info = {
         "name": recipe.name,
         "description": recipe.description.format(params=f"{params / 1e6:.1f}M"),
         "kind": "nanogpt",
+        "tokenizer": {"kind": tokenizer.kind},
+        "vocab_size": vocab_size,
         "training": {
             "corpus": recipe.corpus, "corpus_chars": len(text), "vocab": recipe.vocab, "params": params,
             "iters": iters, "batch_size": batch, "block_size": block,
-            "best_val_loss_nats": round(best_val, 4), "val_bits_per_char": round(best_val / math.log(2), 3),
-            "device": f"{device} {gpu}".strip(), "torch": torch.__version__, "minutes": round(minutes, 1),
+            "chars_per_symbol": round(val_chars_per_symbol, 3),
+            "best_val_loss_nats": round(best_val, 4), "val_bits_per_char": round(bits_per_char, 3),
+            "device": f"{device} {gpu}".strip(), "precision": "float16 autocast" if use_amp else "float32",
+            "torch": torch.__version__, "minutes": round(minutes, 1),
         },
     }
-    model_args = dict(size, vocab_size=len(vocab))
-    write_model_folder(tmp, best_state, model_args, vocab, info)
-    log(f"done in {minutes:.1f} min: best val {best_val / math.log(2):.3f} bits/char")
+    model_args = dict(size, vocab_size=vocab_size)
+    write_model_folder(tmp, best_state, model_args, tokenizer.vocab if tokenizer.kind == "char" else None, info)
+    if tokenizer.kind == "words":
+        tokenizer.to_file(tmp / "words.json", source=f"{recipe.corpus} training split, top {recipe.words} pieces")
+    log(f"done in {minutes:.1f} min: best val {bits_per_char:.3f} bits/char")
     log_file.close()
     if final.exists():
         shutil.rmtree(final)
@@ -197,6 +243,8 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="retrain models that already exist")
     parser.add_argument("--max-iters", type=int, help="override the recipe's iterations (e.g. for a smoke test)")
     parser.add_argument("--max-chars", type=int, help="use only the first N characters of the corpus")
+    parser.add_argument("--amp", action="store_true",
+                        help="float16 mixed precision (faster on GPUs with tensor cores, slower on a GTX 1650)")
     args = parser.parse_args()
 
     if args.list or not args.models:
@@ -211,7 +259,7 @@ def main() -> None:
     if args.device == "cuda" and not torch.cuda.is_available():
         raise SystemExit("CUDA requested but not available (check the NVIDIA driver: it must support CUDA 13.2)")
     for model_id in args.models:
-        train(model_id, device, args.max_iters, args.max_chars, args.force)
+        train(model_id, device, args.max_iters, args.max_chars, args.force, args.amp)
 
 
 if __name__ == "__main__":

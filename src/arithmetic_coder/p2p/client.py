@@ -1,7 +1,7 @@
 """Peer-to-peer chat layer: one immutable codec session per peer, compact binary wire frames.
 
-Each pair of peers shares a base model and a secret key. The key derives a PermutedModel, so
-every session has its own slot order. Frames start with a 4-byte fingerprint of the session's
+Each pair of peers shares a base model and a secret key. The key derives the order of the symbol
+slots, so every session has its own layout. Frames start with a 4-byte fingerprint of the session's
 model, so a payload sent over the wrong session fails fast instead of decoding to garbage.
 """
 from __future__ import annotations
@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from arithmetic_coder.coding.encdec import ArithmeticCoder, MessagePack
-from arithmetic_coder.coding.permutation import PermutedModel
+from arithmetic_coder.coding.permutation import keyed_coder
 
 if TYPE_CHECKING:
     from arithmetic_coder.models.wrappers import ModelWrapper, UniformModelWrapper
@@ -50,9 +50,10 @@ class PeerSession:
     key: bytes | str = field(repr=False)
 
     @classmethod
-    def create(cls, peer_id: str, base_model: BaseModel, key: bytes | str, precision_bits: int = 16) -> PeerSession:
-        """Build the session's coder from the shared base model and key."""
-        coder = ArithmeticCoder(PermutedModel.from_key(base_model, key), precision_bits)
+    def create(cls, peer_id: str, base_model: BaseModel, key: bytes | str,
+               precision_bits: int | None = None) -> PeerSession:
+        """Build the session's coder from the shared base model and key (precision: the model's default)."""
+        coder = keyed_coder(base_model, key, precision_bits)
         return cls(peer_id, coder, coder.fingerprint(), key)
 
     def pack_message(self, msg: str) -> bytes:
@@ -95,7 +96,7 @@ class UserClient:
         except KeyError:
             raise PeerNotFoundError(f"{self.user_id!r} has no session with {peer_id!r}") from None
 
-    def register_peer(self, peer_id: str, base_model: BaseModel, key: bytes | str, precision_bits: int = 16) -> bytes:
+    def register_peer(self, peer_id: str, base_model: BaseModel, key: bytes | str, precision_bits: int | None = None) -> bytes:
         """Create the session with peer_id and return its fingerprint for the handshake."""
         if peer_id in self.sessions:
             raise ValueError(f"{self.user_id!r} already has a session with {peer_id!r}; sessions are immutable")

@@ -1,0 +1,20 @@
+{
+  "name": "Python-GPT",
+  "description": "3.2M-param char nanoGPT trained on Python source code (the standard library)",
+  "kind": "nanogpt",
+  "training": {
+    "corpus": "python",
+    "corpus_chars": 11901068,
+    "vocab": "ascii",
+    "params": 3172608,
+    "iters": 4000,
+    "batch_size": 64,
+    "block_size": 128,
+    "best_val_loss_nats": 1.0366,
+    "val_bits_per_char": 1.496,
+    "device": "cuda NVIDIA GeForce GTX 1650",
+    "precision": "float32",
+    "torch": "2.15.0+cu132",
+    "minutes": 8.8
+  }
+}

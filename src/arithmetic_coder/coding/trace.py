@@ -10,6 +10,7 @@ import math
 from fractions import Fraction
 
 from arithmetic_coder.coding.encdec import ArithmeticCoder, EncodeStep, MessagePack, shortest_binary_in_range
+from arithmetic_coder.tokenizers import char_spans
 
 AXIS_EXTRA_BITS = 8  # digits shown after the shared binary prefix of l and h
 
@@ -55,17 +56,23 @@ def _segments(coder: ArithmeticCoder, cdf: list[int], selected: int, top_n: int)
     return segments
 
 
-def _step_record(coder: ArithmeticCoder, msg: str, step: EncodeStep, prev_k: int, top_n: int) -> dict:
+def _step_record(coder: ArithmeticCoder, msg: str, step: EncodeStep, span: tuple[int, int],
+                 prev_k: int, top_n: int) -> dict:
     """Turn one EncodeStep into the JSON record the frontend animates."""
     c, cdf, total = step.c_index, step.cdf, coder.total
     L, R, s = step.after
     running = shortest_binary_in_range(Fraction(L, 1 << s), Fraction(L + R, 1 << s))
     running_bits = MessagePack(running, 0).to_bits()
     l_bits, h_bits, shared = _axis_labels(L, R, s)
+    start, end = span
     return {
         "step_index": step.index,
-        "char": msg[step.index],
-        "prefix": msg[: step.index],
+        "symbol_id": step.symbol_id,
+        "symbol": coder.tokenizer.vocab[step.symbol_id],  # display label, e.g. "e", " the", "\xd7"
+        "char_start": start,
+        "char_end": end,
+        "char": msg[start:end],  # the text this symbol belongs to (one character for char models)
+        "prefix": msg[:start],
         "prob": (cdf[c + 1] - cdf[c]) / total,
         "sub_l_rel": cdf[c] / total,
         "sub_h_rel": cdf[c + 1] / total,
@@ -80,14 +87,15 @@ def _step_record(coder: ArithmeticCoder, msg: str, step: EncodeStep, prev_k: int
 
 
 def encode_with_trace(coder: ArithmeticCoder, msg: str, top_n: int = 12) -> tuple[MessagePack, list[dict]]:
-    """Encode msg exactly like coder.encode, and also return one trace record per character."""
+    """Encode msg exactly like coder.encode, and also return one trace record per symbol."""
+    spans = char_spans(msg, coder.tokenizer, coder.tokenizer.encode(msg))
     trace: list[dict] = []
     L, R, s = 0, 1, 0
     prev_k = 0
     for step in coder.iter_encode(msg):
-        record = _step_record(coder, msg, step, prev_k, top_n)
+        record = _step_record(coder, msg, step, spans[step.index], prev_k, top_n)
         trace.append(record)
         prev_k = len(record["running_bits"])
         L, R, s = step.after
     r = shortest_binary_in_range(Fraction(L, 1 << s), Fraction(L + R, 1 << s))
-    return MessagePack(r, len(msg)), trace
+    return MessagePack(r, len(trace)), trace

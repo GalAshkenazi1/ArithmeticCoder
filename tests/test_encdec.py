@@ -6,6 +6,7 @@ from fractions import Fraction
 import pytest
 
 from arithmetic_coder.coding.encdec import ArithmeticCoder, MessagePack, _write_varint, shortest_binary_in_range
+from arithmetic_coder.tokenizers import CharTokenizer
 
 
 class FakeModel:
@@ -13,14 +14,13 @@ class FakeModel:
 
     def __init__(self, vocab: list[str]):
         self.vocab = list(vocab)
-
-    def get_vocab(self) -> list[str]:
-        return self.vocab
+        self.tokenizer = CharTokenizer(self.vocab)
 
     def model_digest(self) -> bytes:
         return hashlib.sha256(b"fake").digest()
 
-    def get_char_probs(self, prefix: str) -> list[float]:
+    def get_probs(self, prefix_ids: list[int]) -> list[float]:
+        prefix = self.tokenizer.decode(prefix_ids)
         seed = int.from_bytes(hashlib.sha256(prefix[-3:].encode()).digest()[:4], "big")
         rnd = random.Random(seed)
         w = [rnd.random() ** 8 for _ in self.vocab]

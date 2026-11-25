@@ -26,9 +26,13 @@ DEFAULT_BANK = REPO_ROOT / "model_bank"
 VOCAB_SOURCE = "shakespeare_char"  # the "uniform" baseline uses this model's vocabulary
 UNIFORM_ID = "uniform"
 UNIFORM_ASCII_ID = "uniform_ascii"
+UNIFORM_BYTES_ID = "uniform_bytes"
 
 # vocabulary of the ASCII models: newline + every printable ASCII character (96 symbols)
 ASCII_VOCAB: list[str] = ["\n"] + [chr(i) for i in range(32, 127)]
+
+# files each tokenizer kind needs in a model folder (besides ckpt.pt and model.json)
+TOKENIZER_FILES = {"char": ["meta.pkl"], "bytes": [], "words": ["words.json"], "gpt2": ["vocab.json", "merges.txt"]}
 
 
 class ModelBankError(RuntimeError):
@@ -43,9 +47,12 @@ class ModelSpec:
     name: str
     description: str
     kind: str          # "nanogpt" or "uniform"
-    path: Path | None  # model folder (None for the built-in uniform model)
+    path: Path | None  # model folder (None for the built-in uniform models)
     vocab_size: int
     available: bool    # False if files are missing (listed, but can't be loaded)
+    tokenizer: str = "char"  # "char", "bytes", "words", "gpt2"
+    precision_bits: int | None = None   # coder precision (None: derived from the vocabulary size)
+    context_tokens: int | None = None   # cap on the context the model sees (None: its block size)
 
 
 def bank_dir() -> Path:
@@ -68,28 +75,65 @@ def bank_vocab(model_id: str = VOCAB_SOURCE) -> list[str]:
     return _read_vocab(folder)
 
 
+def _tokenizer_kind(info: dict) -> str:
+    return info.get("tokenizer", {}).get("kind", "char")
+
+
+def load_tokenizer(folder: Path, kind: str):
+    """Build the tokenizer stored in a model folder."""
+    if kind == "char":
+        from arithmetic_coder.tokenizers import CharTokenizer
+
+        return CharTokenizer(_read_vocab(folder))
+    if kind == "bytes":
+        from arithmetic_coder.tokenizers.bytes import ByteTokenizer
+
+        return ByteTokenizer()
+    if kind == "words":
+        from arithmetic_coder.tokenizers.words import WordTokenizer
+
+        return WordTokenizer.from_file(folder / "words.json")
+    if kind == "gpt2":
+        from arithmetic_coder.tokenizers.gpt2_bpe import GPT2Tokenizer
+
+        return GPT2Tokenizer.from_files(folder / "vocab.json", folder / "merges.txt")
+    raise ModelBankError(f"unknown tokenizer kind {kind!r} in {folder}")
+
+
 def _spec_from_folder(folder: Path) -> ModelSpec:
     """Build a spec from a model folder's model.json (missing files make it unavailable)."""
     info = json.loads((folder / "model.json").read_text(encoding="utf-8"))
-    has_files = (folder / "ckpt.pt").exists() and (folder / "meta.pkl").exists()
+    tokenizer = _tokenizer_kind(info)
+    needed = ["ckpt.pt"] + TOKENIZER_FILES.get(tokenizer, [])
+    has_files = all((folder / name).exists() for name in needed)
+    vocab_size = info.get("vocab_size") or (len(load_tokenizer(folder, tokenizer).vocab) if has_files else 0)
     return ModelSpec(
         id=folder.name,
         name=info.get("name", folder.name),
         description=info.get("description", ""),
         kind=info.get("kind", "nanogpt"),
         path=folder,
-        vocab_size=len(_read_vocab(folder)) if has_files else 0,
+        vocab_size=vocab_size,
         available=has_files,
+        tokenizer=tokenizer,
+        precision_bits=info.get("precision_bits"),
+        context_tokens=info.get("context_tokens"),
     )
 
 
-def _uniform_vocab(model_id: str) -> list[str]:
-    """Vocabulary of a built-in uniform model."""
-    return list(ASCII_VOCAB) if model_id == UNIFORM_ASCII_ID else bank_vocab()
+def _uniform_tokenizer(model_id: str):
+    """Tokenizer of a built-in uniform model."""
+    from arithmetic_coder.tokenizers import CharTokenizer
+
+    if model_id == UNIFORM_BYTES_ID:
+        from arithmetic_coder.tokenizers.bytes import ByteTokenizer
+
+        return ByteTokenizer()
+    return CharTokenizer(list(ASCII_VOCAB) if model_id == UNIFORM_ASCII_ID else bank_vocab())
 
 
 def _uniform_specs() -> list[ModelSpec]:
-    """The built-in uniform baselines: over the 65-char Shakespeare vocab, and over printable ASCII."""
+    """Built-in uniform baselines: the 65-char Shakespeare vocab, printable ASCII, and raw bytes."""
     try:
         size = len(bank_vocab())
     except ModelBankError:
@@ -101,6 +145,9 @@ def _uniform_specs() -> list[ModelSpec]:
         ModelSpec(UNIFORM_ASCII_ID, "Uniform ASCII",
                   "every printable ASCII character equally likely: log2(96) = 6.58 bits per char",
                   "uniform", None, len(ASCII_VOCAB), True),
+        ModelSpec(UNIFORM_BYTES_ID, "Uniform Bytes",
+                  "every byte equally likely: 8 bits per byte (plain UTF-8), any text",
+                  "uniform", None, 256, True, tokenizer="bytes"),
     ]
 
 
@@ -128,13 +175,15 @@ def load_model_uncached(model_id: str) -> ModelWrapper | UniformModelWrapper:
     from arithmetic_coder.models.wrappers import ModelWrapper, UniformModelWrapper
 
     if spec.kind == "uniform":
-        return UniformModelWrapper(_uniform_vocab(model_id))
+        return UniformModelWrapper(_uniform_tokenizer(model_id))
     if spec.kind != "nanogpt":
         raise ModelBankError(f"model {model_id!r} has unsupported kind {spec.kind!r}")
     from arithmetic_coder.models.nanogpt import GPT, GPTConfig
 
     return ModelWrapper.from_nanogpt_checkpoint(
-        spec.path / "ckpt.pt", lambda **args: GPT(GPTConfig(**args)), spec.path / "meta.pkl"
+        spec.path / "ckpt.pt", lambda **args: GPT(GPTConfig(**args)),
+        tokenizer=load_tokenizer(spec.path, spec.tokenizer),
+        block_size=spec.context_tokens, precision_bits=spec.precision_bits,
     )
 
 

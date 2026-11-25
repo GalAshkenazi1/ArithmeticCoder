@@ -1,40 +1,36 @@
 import hashlib
 from pathlib import Path
+
 import torch
 import torch.nn.functional as F
 
+from arithmetic_coder.tokenizers import CharTokenizer, Tokenizer
+
+INFERENCE_THREADS = 4  # fixed, because the thread count can change float sums (peers must match exactly)
+
 
 class ModelWrapper:
-    """Wraps a character-level language model so it returns next-char probabilities for a prefix."""
+    """Wraps a language model so it returns next-symbol probabilities for a prefix of symbol ids."""
 
     def __init__(
         self,
         model: torch.nn.Module,
-        itos: dict[int, str] | list[str],
+        tokenizer: Tokenizer,
         block_size: int | None = None,
-        bos_char: str = "\n",
+        precision_bits: int | None = None,
+        threads: int = INFERENCE_THREADS,
     ):
-        """Move the model to CPU in eval mode and build the vocabulary lookups."""
+        """Move the model to CPU in eval mode. block_size limits the context (default: the model's own)."""
         self.device = "cpu" # independent of the model's device
         self.model = model.to(self.device)
         self.model.eval()
-
-        if isinstance(itos, dict):
-            self.vocab = [itos[i] for i in range(len(itos))]
-        else:
-            self.vocab = list(itos)
-
-        self.stoi = {ch: i for i, ch in enumerate(self.vocab)}
-
-        self.block_size = block_size or getattr(
-            getattr(self.model, "config", None), "block_size", 256
-        )
-
-        if bos_char not in self.stoi:
-            raise ValueError(
-                f"BOS character {bos_char!r} must exist in the vocabulary."
-            )
-        self.bos_id = self.stoi[bos_char]
+        self.tokenizer = tokenizer
+        self.block_size = block_size or getattr(getattr(self.model, "config", None), "block_size", 256)
+        if tokenizer.bos_id is None:
+            raise ValueError("the tokenizer needs a BOS symbol for the model's first prediction")
+        self.bos_id = tokenizer.bos_id
+        self.precision_bits = precision_bits
+        self.threads = threads
         self._digest: bytes | None = None
 
     @classmethod
@@ -43,42 +39,34 @@ class ModelWrapper:
         ckpt_path: str | Path,
         model_cls: type[torch.nn.Module],
         meta_path: str | Path | None = None,
+        tokenizer: Tokenizer | None = None,
+        block_size: int | None = None,
+        precision_bits: int | None = None,
     ) -> "ModelWrapper":
-        """Factory method to create a ModelWrapper from a nanoGPT checkpoint and its vocabulary."""
-        import pickle
-
+        """Create a ModelWrapper from a nanoGPT checkpoint; the tokenizer defaults to meta.pkl's characters."""
         checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        if tokenizer is None:
+            if meta_path is not None:
+                import pickle
 
-        if meta_path is not None:
-            with open(meta_path, "rb") as f:
-                meta = pickle.load(f)
-            itos = meta["itos"]
-        elif "itos" in checkpoint:
-            itos = checkpoint["itos"]
-        else:
-            raise ValueError(
-                "Vocabulary (itos) not found in checkpoint or meta_path."
-            )
+                with open(meta_path, "rb") as f:
+                    itos = pickle.load(f)["itos"]
+            elif "itos" in checkpoint:
+                itos = checkpoint["itos"]
+            else:
+                raise ValueError("Vocabulary (itos) not found in checkpoint or meta_path.")
+            tokenizer = CharTokenizer([itos[i] for i in range(len(itos))])
 
         model_args = checkpoint["model_args"]
         model = model_cls(**model_args)
-
-        state_dict = checkpoint["model"]
-        unwanted_prefix = "_orig_mod."
-        for k in list(state_dict.keys()):
-            if k.startswith(unwanted_prefix):
-                state_dict[k[len(unwanted_prefix) :]] = state_dict.pop(k)
-
+        state_dict = {k.removeprefix("_orig_mod."): v for k, v in checkpoint["model"].items()}
         model.load_state_dict(state_dict)
-        return cls(
-            model=model,
-            itos=itos,
-            block_size=model_args.get("block_size"),
-        )
+        return cls(model, tokenizer, block_size=min(block_size or 10**9, model_args.get("block_size", 10**9)),
+                   precision_bits=precision_bits)
 
     def get_vocab(self) -> list[str]:
-        """Return the vocabulary as a list of characters in order."""
-        return self.vocab
+        """Return the symbol labels in id order."""
+        return self.tokenizer.vocab
 
     def model_digest(self) -> bytes:
         """Return a SHA-256 of everything that shapes the predictions: weights, block_size and BOS id."""
@@ -94,45 +82,41 @@ class ModelWrapper:
         return self._digest
 
     @torch.inference_mode()
-    def get_char_probs(self, prefix: str) -> list[float]:
-        """Return the probability distribution over the next character given the prefix."""
-        try:
-            ids = [self.stoi[ch] for ch in prefix[-self.block_size :]]
-        except KeyError as e:
-            raise ValueError(
-                f"Character {e.args[0]!r} not in model vocabulary."
-            ) from e
-
-        # always start the context with BOS, then keep the last block_size tokens
-        token_ids = ([self.bos_id] + ids)[-self.block_size :]
+    def get_probs(self, prefix_ids: list[int]) -> list[float]:
+        """Return the probability distribution over the next symbol, given the symbols so far."""
+        if torch.get_num_threads() != self.threads:
+            torch.set_num_threads(self.threads)
+        # always start the context with BOS, then keep the last block_size symbols
+        token_ids = ([self.bos_id] + list(prefix_ids[-self.block_size:]))[-self.block_size:]
         idx = torch.tensor([token_ids], dtype=torch.long, device=self.device)
 
         output = self.model(idx)
         logits = output[0] if isinstance(output, tuple) else output
 
-        # drop padded vocab slots (nanoGPT may set vocab_size > len(itos))
-        last_logits = logits[0, -1, : len(self.vocab)].to(torch.float64)
-        probs = F.softmax(last_logits, dim=-1)
-
-        return probs.cpu().tolist()
+        # drop padded vocab slots (nanoGPT may set vocab_size > the tokenizer's vocabulary)
+        last_logits = logits[0, -1, : len(self.tokenizer.vocab)].to(torch.float64)
+        return F.softmax(last_logits, dim=-1).cpu().tolist()
 
 
 class UniformModelWrapper:
-    """Mock model wrapper that returns uniform probabilities over a given vocabulary."""
+    """Mock model wrapper that returns uniform probabilities over a tokenizer's symbols."""
 
-    def __init__(self, vocab: list[str]):
-        """Store the vocabulary and precompute the uniform distribution."""
-        self.vocab = list(vocab)
-        self._probs = [1.0 / len(self.vocab)] * len(self.vocab)
+    def __init__(self, tokenizer: Tokenizer | list[str]):
+        """Accepts a tokenizer, or a list of characters (wrapped in a CharTokenizer)."""
+        self.tokenizer = tokenizer if not isinstance(tokenizer, list) else CharTokenizer(
+            tokenizer, bos_char="\n" if "\n" in tokenizer else None)
+        self.precision_bits = None
+        n = len(self.tokenizer.vocab)
+        self._probs = [1.0 / n] * n
 
     def get_vocab(self) -> list[str]:
-        """Return the vocabulary as a list of characters in order."""
-        return self.vocab
+        """Return the symbol labels in id order."""
+        return self.tokenizer.vocab
 
     def model_digest(self) -> bytes:
         """Return a fixed digest identifying the uniform model (the vocab is hashed by the coder)."""
         return hashlib.sha256(b"uniform/v1").digest()
 
-    def get_char_probs(self, prefix: str) -> list[float]:
+    def get_probs(self, prefix_ids: list[int]) -> list[float]:
         """Return the same uniform distribution for every prefix."""
         return self._probs

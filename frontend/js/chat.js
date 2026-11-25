@@ -45,11 +45,13 @@ export class ChatPanel {
     return [...new Set([...text].filter((c) => !this.vocab.has(c)))];
   }
 
-  setVocab(chars) { this.vocab = new Set(chars); }
+  /** Characters a char model accepts; null means any text works (bytes, words, GPT-2). */
+  setVocab(chars) { this.vocab = chars ? new Set(chars) : null; }
 
   setBusy(busy) {
     this.button.disabled = busy;
     this.input.disabled = busy;
+    this.button.textContent = busy ? "Encoding…" : "Send"; // big models (GPT-2) take a few seconds
   }
 
   clearInput() { this.input.value = ""; }

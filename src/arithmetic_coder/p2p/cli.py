@@ -164,7 +164,7 @@ class ChatController:
     async def _register(self, peer_id: str, config: dict, save: bool = True) -> None:
         """Create the session for peer_id, handshake, and decode anything they sent before."""
         model = await asyncio.to_thread(load_model, config["model"])
-        self.client.register_peer(peer_id, model, config["key"], config["precision_bits"])
+        self.client.register_peer(peer_id, model, config["key"], config.get("precision_bits"))
         self.peers[peer_id] = config
         self.status[peer_id] = PENDING
         if save:
@@ -209,7 +209,7 @@ class ChatController:
             self.output("[!] no current peer - /add one, or pick one with /to")
             return
         coder = self.client.sessions[peer].coder
-        unknown = sorted({c for c in text if c not in coder.char_to_idx})
+        unknown = coder.tokenizer.unknown_chars(text)
         if unknown:
             self.output(f"[!] not sent: {' '.join(repr(c) for c in unknown)} not in the model's vocabulary")
             return
@@ -258,7 +258,7 @@ class ChatController:
         if len(args) not in (3, 4):
             raise ValueError("usage: /add <peer> <model> <key> [precision]")
         peer, model, key = args[:3]
-        precision = int(args[3]) if len(args) == 4 else 16
+        precision = int(args[3]) if len(args) == 4 else None  # None: the model's default
         check_id(peer)
         if peer == self.user_id:
             raise ValueError("you can't add yourself")
@@ -266,7 +266,7 @@ class ChatController:
             raise ValueError(f"{peer} is already added; /remove {peer} first to change it")
         if not get_spec(model).available:  # raises ModelBankError for unknown ids
             raise ValueError(f"model {model!r} is listed but its files are missing")
-        if not 8 <= precision <= 32:
+        if precision is not None and not 8 <= precision <= 32:
             raise ValueError("precision must be between 8 and 32")
         await self._register(peer, {"model": model, "key": key, "precision_bits": precision})
         self.output(f"* added {peer} ({model}); waiting for their handshake")
@@ -292,7 +292,7 @@ class ChatController:
         """/models"""
         for spec in list_models():
             note = "" if spec.available else "  (files missing)"
-            self.output(f"  {spec.id:17s} {spec.name:17s} {spec.description}{note}")
+            self.output(f"  {spec.id:17s} {spec.name:17s} [{spec.tokenizer}] {spec.description}{note}")
 
     async def _cmd_stats(self, args: list[str]) -> None:
         """/stats on|off"""

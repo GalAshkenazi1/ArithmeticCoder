@@ -34,4 +34,12 @@ def test_encode_text_roundtrip():
 def test_recipes_are_consistent():
     names = [r.name for r in RECIPES.values()]
     assert len(set(names)) == len(names)
-    assert all(r.size in SIZES and r.vocab in ("shakespeare", "ascii") for r in RECIPES.values())
+    assert all(r.size in SIZES and r.vocab in ("shakespeare", "ascii", "utf8") for r in RECIPES.values())
+    assert all(r.tokenizer in ("char", "bytes", "words") for r in RECIPES.values())
+    assert all((r.tokenizer == "char") == (r.vocab != "utf8") for r in RECIPES.values())
+
+
+def test_keep_unicode():
+    from corpora import keep_unicode
+
+    assert keep_unicode("Grüße\r\n\tשלום 👋\x00\x07end") == "Grüße\n    שלום 👋end"

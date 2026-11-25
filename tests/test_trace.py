@@ -5,7 +5,7 @@ import json
 import pytest
 
 from arithmetic_coder import ArithmeticCoder
-from arithmetic_coder.coding.permutation import PermutedModel
+from arithmetic_coder.coding.permutation import keyed_coder
 from arithmetic_coder.coding.trace import encode_with_trace
 
 TO_BE = "To be, or not to be, that is the question:"
@@ -29,7 +29,7 @@ def test_encode_unchanged_by_refactor(model_name, msg, request):
 
 @pytest.mark.parametrize("msg", ["", "a", TO_BE, "Hark!\nWho goes there?"])
 def test_trace_matches_encode(msg, shakespeare):
-    coder = ArithmeticCoder(PermutedModel.from_key(shakespeare, "trace-key"))
+    coder = keyed_coder(shakespeare, "trace-key")
     pack, trace = encode_with_trace(coder, msg)
     assert pack == coder.encode(msg)
     assert len(trace) == len(msg)

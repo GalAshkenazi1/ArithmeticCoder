@@ -1,0 +1,11 @@
+model,text,chars,mean_bits,median_bits,p95_bits,free_share,over_8_bits_share,bits_in_costliest_10pct
+Shakespeare-GPT,Shakespeare,2993,2.668,2.421,6.423,0.068,0.0167,0.259
+English-GPT,Gutenberg novels,2996,2.574,2.153,6.802,0.070,0.0274,0.287
+Wiki-GPT,Wikipedia,2996,1.913,1.004,6.225,0.269,0.0150,0.352
+TinyStories-GPT,TinyStories,2996,1.066,0.114,4.914,0.490,0.0073,0.517
+Web-GPT,Web (C4),2998,2.246,1.533,6.789,0.206,0.0287,0.324
+Python-GPT,Python code,2865,1.362,0.137,6.239,0.477,0.0244,0.505
+Wiki-GPT,Web (C4),2998,2.519,1.751,7.562,0.190,0.0407,0.331
+TinyStories-GPT,Web (C4),2998,3.891,2.738,12.678,0.173,0.1568,0.332
+Python-GPT,Web (C4),2998,3.557,2.687,10.249,0.103,0.1181,0.306
+Uniform ASCII,Web (C4),2998,6.585,6.584,6.584,0.000,0.0000,0.100

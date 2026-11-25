@@ -1,0 +1,58 @@
+web_small: corpus c4 (12,000,000 chars, vocab 96), size small, 4000 iters x batch 64 x block 128, device cuda NVIDIA GeForce GTX 1650
+step 0: train 4.5595, val 4.5593 nats (6.578 bits/char)
+iter 100: loss 2.5828, 147 ms/iter
+iter 200: loss 2.5056, 119 ms/iter
+step 250: train 2.2751, val 2.2788 nats (3.288 bits/char)
+iter 300: loss 2.1643, 151 ms/iter
+iter 400: loss 2.0519, 119 ms/iter
+step 500: train 1.8987, val 1.9216 nats (2.772 bits/char)
+iter 500: loss 1.9522, 156 ms/iter
+iter 600: loss 1.8794, 115 ms/iter
+iter 700: loss 1.8019, 119 ms/iter
+step 750: train 1.7408, val 1.7589 nats (2.538 bits/char)
+iter 800: loss 1.8525, 151 ms/iter
+iter 900: loss 1.7443, 120 ms/iter
+step 1000: train 1.6460, val 1.6746 nats (2.416 bits/char)
+iter 1000: loss 1.7039, 156 ms/iter
+iter 1100: loss 1.6739, 115 ms/iter
+iter 1200: loss 1.7404, 119 ms/iter
+step 1250: train 1.5871, val 1.6199 nats (2.337 bits/char)
+iter 1300: loss 1.6288, 151 ms/iter
+iter 1400: loss 1.6318, 119 ms/iter
+step 1500: train 1.5562, val 1.5859 nats (2.288 bits/char)
+iter 1500: loss 1.5788, 156 ms/iter
+iter 1600: loss 1.6088, 115 ms/iter
+iter 1700: loss 1.5762, 119 ms/iter
+step 1750: train 1.5269, val 1.5656 nats (2.259 bits/char)
+iter 1800: loss 1.5958, 151 ms/iter
+iter 1900: loss 1.6310, 119 ms/iter
+step 2000: train 1.4984, val 1.5296 nats (2.207 bits/char)
+iter 2000: loss 1.5849, 156 ms/iter
+iter 2100: loss 1.6103, 115 ms/iter
+iter 2200: loss 1.6237, 119 ms/iter
+step 2250: train 1.4799, val 1.5171 nats (2.189 bits/char)
+iter 2300: loss 1.5637, 151 ms/iter
+iter 2400: loss 1.5313, 119 ms/iter
+step 2500: train 1.4596, val 1.5040 nats (2.170 bits/char)
+iter 2500: loss 1.4608, 156 ms/iter
+iter 2600: loss 1.5019, 115 ms/iter
+iter 2700: loss 1.5043, 119 ms/iter
+step 2750: train 1.4449, val 1.4878 nats (2.146 bits/char)
+iter 2800: loss 1.4994, 151 ms/iter
+iter 2900: loss 1.4819, 119 ms/iter
+step 3000: train 1.4235, val 1.4773 nats (2.131 bits/char)
+iter 3000: loss 1.4291, 156 ms/iter
+iter 3100: loss 1.4367, 115 ms/iter
+iter 3200: loss 1.5370, 119 ms/iter
+step 3250: train 1.4294, val 1.4692 nats (2.120 bits/char)
+iter 3300: loss 1.4622, 151 ms/iter
+iter 3400: loss 1.4764, 119 ms/iter
+step 3500: train 1.4093, val 1.4650 nats (2.114 bits/char)
+iter 3500: loss 1.4568, 156 ms/iter
+iter 3600: loss 1.4366, 115 ms/iter
+iter 3700: loss 1.4086, 119 ms/iter
+step 3750: train 1.3968, val 1.4598 nats (2.106 bits/char)
+iter 3800: loss 1.5371, 151 ms/iter
+iter 3900: loss 1.3975, 119 ms/iter
+step 4000: train 1.4075, val 1.4452 nats (2.085 bits/char)
+done in 8.9 min: best val 2.085 bits/char

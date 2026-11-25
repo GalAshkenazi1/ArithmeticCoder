@@ -12,6 +12,7 @@ const PRESETS = [
   { text: "Please send the quarterly report by Friday; thanks!", tag: "modern English" },
   { text: "The Eiffel Tower was completed in 1889 and is 330 metres (1,083 ft) tall.", tag: "encyclopedic, ASCII models" },
   { text: "for i in range(10): print(f\"{i} squared is {i ** 2}\")", tag: "Python, ASCII models" },
+  { text: "Grüße aus Zürich! שלום 👋", tag: "Unicode: bytes, words, GPT-2" },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -30,7 +31,7 @@ const zoom = new ZoomCanvas($("zoom-canvas"), {
 function showEncoding(response) {
   const from = response.sender === "alice" ? "Alice" : "Bob";
   $("zoom-caption").textContent = `${from} -> ${response.receiver === "alice" ? "Alice" : "Bob"}: ` +
-    `${response.stats.chars} chars, ${response.stats.compressed_bits} bits`;
+    `${response.stats.chars} chars → ${response.stats.symbols} symbols → ${response.stats.compressed_bits} bits`;
   $("step-slider").max = Math.max(0, response.trace.length - 1);
   tracker.setTrace(response.trace);
   zoom.setTrace(response.trace);
@@ -101,6 +102,10 @@ function renderSession(session, flash) {
 }
 
 async function switchTo(modelId, key) {
+  const select = $("model-switcher");
+  const name = state.models.find((m) => m.id === modelId)?.name ?? modelId;
+  select.disabled = true; // loading a big model (GPT-2: 500 MB) takes a few seconds
+  $("status-model").textContent = `loading ${name}…`;
   try {
     const session = await api.switchModel(modelId, key);
     renderSession(session, true);
@@ -109,8 +114,16 @@ async function switchTo(modelId, key) {
     panels.bob.addSystemLine(line);
   } catch (error) {
     panels.alice.showError(error.message);
-    if (state.session) $("model-switcher").value = state.session.model_id; // undo the selection
+    if (state.session) renderSession(state.session, false); // undo the selection
+  } finally {
+    select.disabled = false;
   }
+}
+
+/** e.g. "65 chars", "bytes", "4,352 words+bytes", "BPE 50k". */
+function tokenizerLabel(model) {
+  const n = model.vocab_size.toLocaleString("en-US");
+  return { char: `${n} chars`, bytes: "bytes", words: `${n} words+bytes`, gpt2: "BPE 50k" }[model.tokenizer] ?? n;
 }
 
 function renderModelSwitcher(models) {
@@ -119,7 +132,7 @@ function renderModelSwitcher(models) {
   for (const model of models) {
     const option = document.createElement("option");
     option.value = model.id;
-    option.textContent = `${model.name} (${model.vocab_size} chars)`;
+    option.textContent = `${model.name} (${tokenizerLabel(model)})`;
     option.title = model.available ? model.description : `${model.description} (files missing)`;
     option.disabled = !model.available;
     select.appendChild(option);

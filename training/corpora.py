@@ -146,17 +146,31 @@ def shakespeare_vocab() -> list[str]:
 
 
 def vocabulary(kind: str) -> list[str]:
-    """A vocabulary by name: 'shakespeare' (65 chars) or 'ascii' (96 chars)."""
+    """A character vocabulary by name: 'shakespeare' (65 chars) or 'ascii' (96 chars)."""
     return shakespeare_vocab() if kind == "shakespeare" else list(ASCII_VOCAB)
 
 
+def keep_unicode(text: str) -> str:
+    """Light cleaning for byte/word models: unify newlines, tabs -> spaces, drop control characters.
+
+    Accents, emoji and other scripts are kept (unlike restrict(), which maps text to a fixed vocab).
+    """
+    text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\t", "    ")
+    return "".join(c for c in text if c == "\n" or not unicodedata.category(c).startswith("C"))
+
+
 def load_corpus(corpus: str, vocab_kind: str, max_chars: int = MAX_CHARS) -> str:
-    """Cleaned corpus text restricted to the vocabulary (cached in training/_data/)."""
+    """Cleaned corpus text (cached in training/_data/).
+
+    vocab_kind: 'shakespeare' / 'ascii' restrict the text to that character vocabulary;
+    'utf8' keeps all Unicode (for byte and word tokenizers).
+    """
     CACHE.mkdir(exist_ok=True)
     cached = CACHE / f"{corpus}-{vocab_kind}.txt"
     if cached.exists():
         text = cached.read_text(encoding="utf-8")
     else:
-        text = restrict(CORPORA[corpus](), vocabulary(vocab_kind))
+        raw = CORPORA[corpus]()
+        text = keep_unicode(raw) if vocab_kind == "utf8" else restrict(raw, vocabulary(vocab_kind))
         cached.write_text(text, encoding="utf-8", newline="\n")
     return text[:max_chars]

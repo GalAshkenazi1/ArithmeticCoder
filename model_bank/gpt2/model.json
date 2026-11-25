@@ -1,0 +1,13 @@
+{
+  "name": "GPT-2 (124M)",
+  "description": "OpenAI's pretrained GPT-2 small: 124M params, 50,257-token byte-level BPE, trained on WebText",
+  "kind": "nanogpt",
+  "tokenizer": {
+    "kind": "gpt2"
+  },
+  "vocab_size": 50257,
+  "precision_bits": 26,
+  "context_tokens": 256,
+  "source": "https://huggingface.co/openai-community/gpt2/resolve/main/",
+  "licence": "MIT (OpenAI GPT-2)"
+}

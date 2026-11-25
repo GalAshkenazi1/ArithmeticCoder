@@ -5,7 +5,7 @@
 // to the full width: that slot *is* the next window. Positions come straight from the trace
 // (exact cdf / total), so the picture is the encoder's real arithmetic.
 
-import { costColor, displayChar, inkOn, shortBits } from "./format.js";
+import { costColor, displaySymbol, inkOn, shortBits } from "./format.js";
 
 const HOLD_SHARE = 0.35;   // part of a step spent showing the split before zooming
 const BASE_STEP_MS = 1100; // one step at 1x speed
@@ -182,12 +182,14 @@ export class ZoomCanvas {
   _segmentLabel(seg, x, w, bar) {
     const { ctx } = this;
     const words = { " ": "space", "\n": "newline" };
-    const label = seg.char === null ? (w > 34 ? `+${seg.count}` : "")
-      : (words[seg.char] && w > 70 ? words[seg.char] : displayChar(seg.char));
-    if (!label || w < 13) return;
+    const raw = seg.char === null ? (w > 34 ? `+${seg.count}` : "")
+      : (words[seg.char] && w > 70 ? words[seg.char] : displaySymbol(seg.char));
+    if (!raw || w < 13) return;
     ctx.fillStyle = seg.char === null ? "#94a3b8" : inkOn(seg.prob);
     ctx.font = `${seg.is_selected ? "bold " : ""}14px ui-monospace, Consolas, monospace`;
     ctx.textAlign = "center";
+    const label = fitText(ctx, raw, w - 4); // multi-character symbols (words, BPE tokens) may not fit
+    if (!label) return;
     ctx.fillText(label, x + w / 2, bar.y + bar.h / 2 + 2);
     if (seg.char !== null && w > 44) {
       ctx.font = "10px ui-sans-serif, system-ui";
@@ -218,7 +220,8 @@ export class ZoomCanvas {
     ctx.font = "12px ui-sans-serif, system-ui";
     ctx.textAlign = "left";
     ctx.fillStyle = "#cbd5e1";
-    const left = fitText(ctx, `step ${step.step_index + 1}/${this.length}: encode '${displayChar(step.char)}'`, (width - 16) * 0.55);
+    const symbol = displaySymbol(step.symbol ?? step.char);
+    const left = fitText(ctx, `symbol ${step.step_index + 1}/${this.length}: encode '${symbol}'`, (width - 16) * 0.55);
     ctx.fillText(left, 8, 16);
     // right side: full sentence if it fits next to the left text, else just the probability
     const room = width - 16 - ctx.measureText(left).width - 16;
@@ -248,7 +251,7 @@ export class ZoomCanvas {
     ctx.font = "12px ui-sans-serif, system-ui";
     ctx.textAlign = "left";
     ctx.fillStyle = "#cbd5e1";
-    ctx.fillText(fitText(ctx, `done: ${this.length} characters encoded`, bar.w), 8, 16);
+    ctx.fillText(fitText(ctx, `done: ${this.length} symbols encoded`, bar.w), 8, 16);
   }
 }
 

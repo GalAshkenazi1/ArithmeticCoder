@@ -1,7 +1,7 @@
 // Bit tracker: the message with the current character highlighted, its probability, the running
 // shortest binary fraction (new bits highlighted), the "+0 bits" pill, and one tick per step.
 
-import { costColor, displayChar, escapeHtml } from "./format.js";
+import { costColor, displayChar, displaySymbol, escapeHtml } from "./format.js";
 
 const MAX_BITS_SHOWN = 96;
 
@@ -40,7 +40,7 @@ export class BitTracker {
     this.ticks.innerHTML = trace.map((t, i) => {
       const h = t.bits_added === 0 ? 3 : 6 + (32 * t.bits_added) / most;
       const color = t.bits_added === 0 ? "#10b981" : costColor(t.prob);
-      return `<div class="tick" data-i="${i}" title="'${escapeHtml(displayChar(t.char))}': +${t.bits_added} bits"
+      return `<div class="tick" data-i="${i}" title="'${escapeHtml(displaySymbol(t.symbol ?? t.char))}': +${t.bits_added} bits"
                    style="height:${h}px;background:${color}"></div>`;
     }).join("");
     this.ticks.querySelectorAll(".tick").forEach((el) =>
@@ -51,13 +51,18 @@ export class BitTracker {
   show(i) {
     const t = this.trace[i];
     if (!t) return;
+    // highlight every character the current symbol belongs to (a word, or all bytes of one emoji)
+    const start = t.char_start ?? t.prefix.length;
+    const end = t.char_end ?? start + 1;
+    const current = this.message.slice(start, end);
     this.prefix.innerHTML =
-      `<span class="done">${escapeHtml(t.prefix)}</span>` +
-      `<span class="current">${escapeHtml(displayChar(t.char))}</span>` +
-      `<span class="todo">${escapeHtml(this.message.slice(i + 1))}</span>`;
+      `<span class="done">${escapeHtml(this.message.slice(0, start))}</span>` +
+      `<span class="current">${escapeHtml(current.length === 1 ? displayChar(current) : current)}</span>` +
+      `<span class="todo">${escapeHtml(this.message.slice(end))}</span>`;
 
     const surprise = -Math.log2(t.prob);
-    this.prob.innerHTML = `P('${escapeHtml(displayChar(t.char))}' | prefix) = <b class="text-slate-200">${(t.prob * 100).toFixed(2)}%</b>` +
+    const label = displaySymbol(t.symbol ?? t.char);
+    this.prob.innerHTML = `P('${escapeHtml(label)}' | prefix) = <b class="text-slate-200">${(t.prob * 100).toFixed(2)}%</b>` +
       ` &nbsp;&middot;&nbsp; surprise ${surprise.toFixed(2)} bits &nbsp;&middot;&nbsp; interval width 2^${t.log2_width_after.toFixed(1)}`;
 
     const bits = t.running_bits;

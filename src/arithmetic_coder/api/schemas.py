@@ -14,6 +14,7 @@ class ModelInfo(BaseModel):
     description: str
     vocab_size: int
     available: bool
+    tokenizer: str = "char"  # "char", "bytes", "words", "gpt2"
 
 
 class ModelsResponse(BaseModel):
@@ -30,7 +31,9 @@ class StateResponse(BaseModel):
     model_name: str
     fingerprint_hex: str
     vocab_size: int
-    vocab: list[str]
+    vocab: list[str] | None  # the characters a char model accepts; None = any text works
+    tokenizer: str
+    precision_bits: int
     key: str
 
 
@@ -60,10 +63,12 @@ class SendStats(BaseModel):
     """Sizes of one message."""
 
     chars: int
+    symbols: int             # how many symbols the tokenizer made of the text
     original_bits: int       # 8 x UTF-8 bytes
     compressed_bits: int     # k, the payload's exact bit count
     wire_bytes: int          # whole frame, header included
     bpc: float               # k / chars
+    bits_per_symbol: float   # k / symbols
     compression_ratio: float  # original bits / wire bits
 
 

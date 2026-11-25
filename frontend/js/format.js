@@ -7,6 +7,13 @@ export function displayChar(c) {
   return c;
 }
 
+/** Visible label for a symbol (one char, a word like " the", or a raw byte like "\xd7"). */
+export function displaySymbol(s) {
+  if (s === null || s === undefined) return "";
+  if (s.length <= 1) return displayChar(s);
+  return s.replace(/\n/g, "↵").replace(/^ /, "␣");
+}
+
 /** Bits a character costs at probability p: -log2(p). */
 export const costBits = (p) => -Math.log2(p);
 

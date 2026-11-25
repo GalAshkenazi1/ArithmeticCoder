@@ -1,0 +1,9 @@
+model,tokenizer,Web (C4),Wikipedia,TinyStories,Unicode (web + multilingual)
+Web-GPT,characters (96),2.242,2.258,2.123,
+Web-Bytes,UTF-8 bytes (256),2.261,2.287,2.149,2.760
+Web-Words,"words + bytes (4,352)",2.112,2.057,1.834,2.863
+GPT-2 (124M),"GPT-2 BPE (50,257)",1.456,1.263,1.112,1.799
+Uniform ASCII,"characters, no model",6.579,6.580,6.582,
+Uniform Bytes,"bytes, no model",7.995,7.998,7.998,8.648
+Wiki-GPT,characters (96),2.513,1.911,2.391,
+Wiki-Bytes,UTF-8 bytes (256),2.517,1.937,2.378,3.458

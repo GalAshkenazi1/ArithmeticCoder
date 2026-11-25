@@ -51,12 +51,15 @@ class DemoState:
     def state(self) -> dict:
         """The shared session as the header shows it."""
         coder = self.alice.sessions["bob"].coder
+        is_char = coder.tokenizer.kind == "char"
         return {
             "model_id": self.model_id,
             "model_name": get_spec(self.model_id).name,
             "fingerprint_hex": coder.fingerprint().hex(),
             "vocab_size": len(coder.vocab),
-            "vocab": sorted(coder.vocab),
+            "vocab": sorted(coder.vocab) if is_char else None,  # only char models restrict the text
+            "tokenizer": coder.tokenizer.kind,
+            "precision_bits": coder.precision_bits,
             "key": self.key,
         }
 
@@ -66,7 +69,7 @@ class DemoState:
         receiver = receiver_client.user_id
         with self._lock:
             session = sender_client.sessions[receiver]
-            unknown = sorted({c for c in text if c not in session.coder.char_to_idx})
+            unknown = session.coder.tokenizer.unknown_chars(text)
             if unknown:
                 raise UnknownCharactersError(unknown)
             pack, trace = encode_with_trace(session.coder, text)
@@ -95,10 +98,12 @@ class DemoState:
             ],
             "stats": {
                 "chars": len(text),
+                "symbols": pack.length,
                 "original_bits": original_bits,
                 "compressed_bits": len(bits),
                 "wire_bytes": len(frame),
                 "bpc": len(bits) / len(text) if text else 0.0,
+                "bits_per_symbol": len(bits) / pack.length if pack.length else 0.0,
                 "compression_ratio": original_bits / (8 * len(frame)),
             },
             "trace": trace,

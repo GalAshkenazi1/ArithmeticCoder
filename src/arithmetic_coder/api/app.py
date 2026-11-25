@@ -46,7 +46,8 @@ def create_app(state: DemoState | None = None, static_dir: Path | None = None) -
     def get_models() -> dict:
         """All models in the registry and the one in use."""
         models = [ModelInfo(id=s.id, name=s.name, description=s.description,
-                            vocab_size=s.vocab_size, available=s.available) for s in list_models()]
+                            vocab_size=s.vocab_size, available=s.available, tokenizer=s.tokenizer)
+                  for s in list_models()]
         return {"models": models, "current": demo.model_id}
 
     @app.get("/api/state", response_model=StateResponse)

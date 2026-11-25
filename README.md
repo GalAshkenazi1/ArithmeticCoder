@@ -21,6 +21,10 @@ uv sync --all-groups
 | Command-line chat client | `uv run arith-chat --user alice`, then `/add bob shakespeare_char <key>` |
 | Tests | `uv run pytest` |
 | Model comparison study | `uv run --group studies python studies/01_compare_models/compare_models.py` |
+| Every model on every kind of text | `uv run --group studies python studies/02_model_bank/compare_bank.py` |
+| How the models differ (char classes, free chars, overconfidence) | `uv run --group studies python studies/03_model_differences/compare_models.py` |
+| Bits per character along a message | `uv run --group studies python studies/04_bits_along_string/along_string.py` |
+| Characters vs bytes vs words vs GPT-2 | `uv run --group studies python studies/05_tokenizations/compare_tokenizations.py` |
 
 ## Layout
 
@@ -39,15 +43,41 @@ tests/                  pytest suite
 
 ## Models
 
-Every folder in `model_bank/` that contains `ckpt.pt`, `meta.pkl` and `model.json` is a model. The
-built-in uniform baselines (`uniform` over the 65 Shakespeare characters, `uniform_ascii` over the 96
-printable ASCII characters) need no files.
+Every folder in `model_bank/` with `ckpt.pt`, `model.json` and its tokenizer's files is a model. The
+built-in uniform baselines need no files: `uniform` (the 65 Shakespeare characters), `uniform_ascii`
+(96 printable ASCII characters) and `uniform_bytes` (256 bytes, any text).
 
 `model.json` example:
 
 ```json
 { "name": "Shakespeare-GPT", "description": "0.8M-param char-level nanoGPT trained on Tiny Shakespeare", "kind": "nanogpt" }
 ```
+
+### Tokenizers
+
+Each model brings its own tokenizer (`"tokenizer": {"kind": ...}` in `model.json`, default `char`).
+The coder works on its symbols, and sizes are still compared in bits per *character*.
+
+| kind | symbols | files | any text? |
+|---|---|---|---|
+| `char` | one per character of a fixed vocabulary | `meta.pkl` | no: only the vocabulary's characters |
+| `bytes` | the 256 UTF-8 bytes | - | yes |
+| `words` | 256 bytes + a list of whole words (unknown words are spelled out in bytes) | `words.json` | yes |
+| `gpt2` | GPT-2's 50,257-token byte-level BPE (our own encoder) | `vocab.json`, `merges.txt` | yes |
+
+Big vocabularies get more coder precision automatically (16 bits up to 256 symbols, then log2(vocab) + 10:
+23 for words, 26 for GPT-2), so every symbol's minimum count stays a tiny fraction of the range.
+
+### GPT-2 (pretrained, 124M params)
+
+```
+uv run --project training python training/fetch_gpt2.py
+```
+
+This downloads OpenAI's GPT-2 small (~550 MB, MIT licence) from Hugging Face and maps it onto the
+nanoGPT model code already in the package, so no `transformers` dependency is needed. It writes
+`model_bank/gpt2/`, whose `ckpt.pt` (498 MB) is git-ignored. On CPU it encodes or decodes about 15
+tokens per second, so a short chat message takes 1–2 s each way. Its context is capped at 256 tokens.
 
 ### Training models (GPU)
 
@@ -72,6 +102,8 @@ Each recipe is a corpus, a vocabulary, a size and a training budget (see `RECIPE
 | `stories_small` | TinyStories (simple English) | ASCII (96) | small (3.2M) |
 | `web_small` | C4 (web text) | ASCII (96) | small (3.2M) |
 | `python_small` | Python standard library source | ASCII (96) | small (3.2M) |
+| `web_bytes`, `wiki_bytes` | C4 / WikiText with Unicode kept | UTF-8 bytes (256) | small |
+| `web_words` | C4 with Unicode kept | 4,096 words + 256 bytes | small (+1M embedding) |
 
 ### Importing models trained elsewhere
 
@@ -85,8 +117,12 @@ that the model loads.
 
 ## Notes
 
-- **Peers must use the same torch version.** The model's probabilities differ slightly between
-  torch versions, and a single difference breaks decoding. The fingerprint doesn't detect this.
-  `uv.lock` pins the version, so peers who install with `uv sync` match.
+- **Peers must get bit-identical probabilities.** A single difference in a rounded count breaks decoding,
+  and the fingerprint doesn't detect it. Three things can cause one:
+  - **The torch version.** `uv.lock` pins it, so peers who install with `uv sync` match.
+  - **The number of CPU threads.** Inference always uses 4 threads, and a test checks that 1 and 4
+    threads give identical counts.
+  - **The CPU's vector instructions,** which can differ between machines. This risk remains, and it
+    grows with bigger models and higher precision.
 - **This is a POC, not secure messaging.** The key permutation only hides the encoding, keys are
   stored in plain text, and the relay has no authentication.

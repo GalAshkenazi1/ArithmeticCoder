@@ -66,3 +66,28 @@ def test_errors(client):
 def test_frontend_served_at_root(client):
     r = client.get("/")
     assert r.status_code == 200 and "<title>demo</title>" in r.text
+
+
+UNICODE = "Grüße aus Zürich! שלום 👋"
+
+
+def test_byte_model_sends_any_text(client):
+    state = client.post("/api/switch_model", json={"model_id": "uniform_bytes"}).json()
+    assert state["tokenizer"] == "bytes" and state["vocab"] is None and state["precision_bits"] == 16
+    body = client.post("/api/send", json={"sender": "alice", "text": UNICODE}).json()
+    assert body["decoded_text"] == UNICODE
+    assert body["stats"]["symbols"] == len(UNICODE.encode("utf-8")) > body["stats"]["chars"]
+    spans = [(t["char_start"], t["char_end"]) for t in body["trace"]]
+    assert spans[-1][1] == len(UNICODE) and all(a <= b for a, b in spans)
+
+
+def test_gpt2_send(client):
+    from arithmetic_coder.models.registry import get_spec
+
+    if not get_spec("gpt2").available:
+        pytest.skip("GPT-2 not fetched")
+    state = client.post("/api/switch_model", json={"model_id": "gpt2"}).json()
+    assert state["tokenizer"] == "gpt2" and state["precision_bits"] == 26
+    body = client.post("/api/send", json={"sender": "bob", "text": UNICODE}).json()
+    assert body["decoded_text"] == UNICODE
+    assert body["stats"]["symbols"] < len(UNICODE.encode("utf-8"))  # BPE merges bytes

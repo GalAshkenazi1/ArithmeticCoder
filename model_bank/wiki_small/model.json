@@ -1,0 +1,20 @@
+{
+  "name": "Wiki-GPT",
+  "description": "3.2M-param char nanoGPT trained on Wikipedia articles (WikiText-2)",
+  "kind": "nanogpt",
+  "training": {
+    "corpus": "wikitext",
+    "corpus_chars": 10507235,
+    "vocab": "ascii",
+    "params": 3172608,
+    "iters": 4000,
+    "batch_size": 64,
+    "block_size": 128,
+    "best_val_loss_nats": 1.421,
+    "val_bits_per_char": 2.05,
+    "device": "cuda NVIDIA GeForce GTX 1650",
+    "precision": "float32",
+    "torch": "2.15.0+cu132",
+    "minutes": 8.9
+  }
+}

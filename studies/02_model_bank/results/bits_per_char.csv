@@ -1,0 +1,8 @@
+model,Shakespeare,Gutenberg novels,Wikipedia,TinyStories,Web (C4),Python code
+English-GPT,3.363,2.572,,,,
+Python-GPT,3.858,3.365,3.632,3.374,3.554,1.357
+Shakespeare-GPT,2.667,2.964,,,,
+TinyStories-GPT,4.104,2.955,3.976,1.063,3.887,7.006
+Web-GPT,3.064,2.418,2.258,2.123,2.242,3.633
+Wiki-GPT,3.351,2.689,1.911,2.391,2.513,4.826
+Uniform ASCII,6.582,6.584,6.580,6.582,6.579,6.580

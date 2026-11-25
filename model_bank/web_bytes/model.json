@@ -1,0 +1,25 @@
+{
+  "name": "Web-Bytes",
+  "description": "3.2M-param nanoGPT over UTF-8 bytes, trained on web text (C4, Unicode kept)",
+  "kind": "nanogpt",
+  "tokenizer": {
+    "kind": "bytes"
+  },
+  "vocab_size": 256,
+  "training": {
+    "corpus": "c4",
+    "corpus_chars": 12000000,
+    "vocab": "utf8",
+    "params": 3213568,
+    "iters": 4000,
+    "batch_size": 64,
+    "block_size": 128,
+    "chars_per_symbol": 0.993,
+    "best_val_loss_nats": 1.4493,
+    "val_bits_per_char": 2.105,
+    "device": "cuda NVIDIA GeForce GTX 1650",
+    "precision": "float32",
+    "torch": "2.15.0+cu132",
+    "minutes": 9.1
+  }
+}
