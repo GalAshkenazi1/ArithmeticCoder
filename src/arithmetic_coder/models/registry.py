@@ -4,6 +4,8 @@ A model is a folder  model_bank/<id>/  containing:
     ckpt.pt     nanoGPT checkpoint
     meta.pkl    vocabulary (itos)
     model.json  {"name": "Shakespeare-GPT", "description": "...", "kind": "nanogpt"}
+                optional: "dataset" {name, about, url, chars}, "examples" [typical sentences], "training" {...},
+                "showcase": false (kept for the studies, not listed in the web showcase)
 Add a model by dropping such a folder into the bank, importing one (arith-import-model), or training
 one (training/train.py). The built-in uniform baselines need no files. Set ARITH_MODEL_BANK to use a
 bank somewhere else.
@@ -13,7 +15,7 @@ from __future__ import annotations
 import json
 import os
 import pickle
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -53,6 +55,7 @@ class ModelSpec:
     tokenizer: str = "char"  # "char", "bytes", "words", "gpt2"
     precision_bits: int | None = None   # coder precision (None: derived from the vocabulary size)
     context_tokens: int | None = None   # cap on the context the model sees (None: its block size)
+    info: dict = field(default_factory=dict, compare=False, repr=False)  # model.json as written (dataset, examples, ...)
 
 
 def bank_dir() -> Path:
@@ -118,6 +121,7 @@ def _spec_from_folder(folder: Path) -> ModelSpec:
         tokenizer=tokenizer,
         precision_bits=info.get("precision_bits"),
         context_tokens=info.get("context_tokens"),
+        info=info,
     )
 
 
@@ -132,6 +136,14 @@ def _uniform_tokenizer(model_id: str):
     return CharTokenizer(list(ASCII_VOCAB) if model_id == UNIFORM_ASCII_ID else bank_vocab())
 
 
+def spec_tokenizer(spec: ModelSpec):
+    """The tokenizer of a listed model (without loading its weights)."""
+    return _uniform_tokenizer(spec.id) if spec.path is None else load_tokenizer(spec.path, spec.tokenizer)
+
+
+UNIFORM_INFO = {"dataset": None}  # nothing learned: every symbol is equally likely
+
+
 def _uniform_specs() -> list[ModelSpec]:
     """Built-in uniform baselines: the 65-char Shakespeare vocab, printable ASCII, and raw bytes."""
     try:
@@ -141,13 +153,17 @@ def _uniform_specs() -> list[ModelSpec]:
     return [
         ModelSpec(UNIFORM_ID, "Uniform Baseline",
                   "every character equally likely: log2(65) = 6.02 bits per char, no model at all",
-                  "uniform", None, size, size > 0),
+                  "uniform", None, size, size > 0,
+                  info={**UNIFORM_INFO, "showcase": False, "examples": ["To be, or not to be, that is the question:",
+                                                     "Qzx jvk wpf, Lrrg?"]}),
         ModelSpec(UNIFORM_ASCII_ID, "Uniform ASCII",
                   "every printable ASCII character equally likely: log2(96) = 6.58 bits per char",
-                  "uniform", None, len(ASCII_VOCAB), True),
+                  "uniform", None, len(ASCII_VOCAB), True,
+                  info={**UNIFORM_INFO, "examples": ["for i in range(10): print(i)", "x7#Qp!Z@ kw]"]}),
         ModelSpec(UNIFORM_BYTES_ID, "Uniform Bytes",
                   "every byte equally likely: 8 bits per byte (plain UTF-8), any text",
-                  "uniform", None, 256, True, tokenizer="bytes"),
+                  "uniform", None, 256, True, tokenizer="bytes",
+                  info={**UNIFORM_INFO, "examples": ["Hello, world!", "שלום 👋"]}),
     ]
 
 

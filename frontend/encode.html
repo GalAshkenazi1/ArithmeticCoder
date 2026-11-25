@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Encode: arithmetic coding, step by step</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%237b6ee6'/%3E%3Crect x='3' y='7' width='10' height='2' rx='1' fill='%23fff'/%3E%3Ccircle cx='9' cy='8' r='2' fill='%230ca30c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b0f17">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <header class="page-header">
+    <nav class="tabs" aria-label="pages">
+      <a href="./">Start</a><a href="encode.html" aria-current="page">Encode</a><a href="compare.html">Compare</a><a href="encoders.html">The encoders</a>
+    </nav>
+    <h1>Encode</h1>
+    <p>Pick an <span class="term" data-term="encoder">encoder</span>, type a message, and watch the model squeeze it into the shortest binary fraction it can.</p>
+  </header>
+
+  <main class="frame">
+
+    <!-- text goes in (down into the encoder) -->
+    <section class="io input-box" aria-label="input">
+      <label class="box-title" for="text-input">type here</label>
+      <textarea id="text-input" rows="2" maxlength="280" spellcheck="false" placeholder="type here…"></textarea>
+      <ul class="instructions">
+        <li>Type anything: a word, a sentence, a line of code. It's encoded as you type.</li>
+        <li>Then pick another encoder below and watch the bits change.</li>
+        <li>Accents and emoji need a byte, word or GPT-2 encoder.</li>
+      </ul>
+      <div id="input-error" class="error" role="alert"></div>
+    </section>
+
+    <!-- the encoder: who encodes (top), the result, how (animation), and what it costs (graph) -->
+    <section class="encoder-panel" aria-label="encoder">
+      <div class="arrow down" aria-hidden="true"></div>
+      <div class="panel-top">
+        <div class="picker">
+          <button id="encoder-card" class="encoder-card" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="avatar" id="encoder-avatar"></span>
+            <span class="encoder-text">
+              <span class="encoder-name" id="encoder-name">loading encoders…</span>
+              <span class="encoder-sub" id="encoder-sub"></span>
+            </span>
+            <span class="chevron" aria-hidden="true">&#9662;</span>
+          </button>
+          <div id="encoder-menu" class="encoder-menu" role="listbox" hidden></div>
+        </div>
+        <span id="busy" class="busy" hidden>encoding…</span>
+        <div class="panel-tools">
+          <div id="view-toggle"></div>
+          <button id="btn-tour" type="button" class="tour-button" title="a short guided tour of this page">? tour</button>
+        </div>
+        <div class="playback" aria-label="playback">
+          <button id="btn-replay" type="button" title="replay from the first symbol">&#8634;</button>
+          <button id="btn-back" type="button" title="previous symbol">&#9664;</button>
+          <button id="btn-play" type="button" class="play" title="play / pause">&#10074;&#10074;</button>
+          <button id="btn-forward" type="button" title="next symbol">&#9654;</button>
+          <span id="step-label" class="step-label">0 / 0</span>
+          <div class="speed" id="speed" role="group" aria-label="speed">
+            <button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1" class="active">1×</button><button type="button" data-speed="2">2×</button><button type="button" data-speed="4">4×</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="headline" class="headline" aria-live="polite"></div>
+
+      <div class="panel-body">
+        <div class="animation">
+          <div class="box-title">Coding animation <span class="hint">each row is the <span class="term" data-term="interval">interval</span> after one more <span class="term" data-term="symbol">symbol</span>: the chosen box is stretched into the next row</span></div>
+          <div id="ladder" class="ladder"></div>
+        </div>
+        <aside class="graph">
+          <div class="box-title"><span class="term" data-term="bpc">bits / char</span></div>
+          <div id="graph" class="graph-area"><svg id="graph-svg" role="img" aria-label="bits per character"></svg></div>
+          <div id="graph-tooltip" class="tooltip" hidden></div>
+          <div class="legend">
+            <span><i class="key bar"></i><span class="term" data-term="cost">cost</span> of each character</span>
+            <span><i class="key line"></i>bits sent per character so far</span>
+            <span><i class="key ref"></i>plain text (8)</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- bits come out (down from the encoder) -->
+    <section class="io output-box" aria-label="output">
+      <div class="arrow down" aria-hidden="true"></div>
+      <div class="box-title"><span class="term" data-term="bits-sent">bits sent</span> <button id="btn-copy" type="button" class="copy" title="copy the bits">copy</button></div>
+      <div id="bits" class="bits" aria-live="polite"></div>
+      <div id="stats" class="stats"></div>
+      <div id="decode-status" class="decode-status"></div>
+      <button id="btn-receiver" type="button" class="receiver-button" disabled>watch the receiver decode it ▸</button>
+    </section>
+
+    <!-- the receiver: the same model turns the bits back into the text -->
+    <section id="receiver" class="encoder-panel receiver" aria-label="the receiver" hidden>
+      <div class="panel-top">
+        <div class="anim-who">
+          <span class="avatar" id="receiver-avatar"></span>
+          <div><div class="anim-title">The receiver</div>
+            <div class="anim-sub">has only the bits and the same encoder. In each row, the green dot (the received number) lands in one box: that box's symbol comes next.</div></div>
+        </div>
+        <div class="playback" aria-label="receiver playback">
+          <button id="recv-replay" type="button" title="decode again from the start">&#8634;</button>
+          <button id="recv-play" type="button" class="play" title="play / pause">&#9654;</button>
+          <span id="recv-step" class="step-label">0 / 0</span>
+          <button id="recv-close" type="button" class="anim-close" title="close">&times;</button>
+        </div>
+      </div>
+      <div class="received">
+        <div><span class="received-label">received</span> <span id="recv-bits" class="received-bits"></span></div>
+        <div><span class="received-label">decoded so far</span> <span id="recv-text" class="received-text"></span></div>
+      </div>
+      <div id="receiver-ladder" class="ladder"></div>
+    </section>
+
+  </main>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

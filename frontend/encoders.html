@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The encoders</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%237b6ee6'/%3E%3Crect x='3' y='7' width='10' height='2' rx='1' fill='%23fff'/%3E%3Ccircle cx='9' cy='8' r='2' fill='%230ca30c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b0f17">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <header class="page-header">
+    <nav class="tabs" aria-label="pages">
+      <a href="./">Start</a><a href="encode.html">Encode</a><a href="compare.html">Compare</a><a href="encoders.html" aria-current="page">The encoders</a>
+    </nav>
+    <h1>The encoders</h1>
+    <p>An <span class="term" data-term="encoder">encoder</span> is a model plus a way to cut text into <span class="term" data-term="symbol">symbols</span>. Pick a family.</p>
+  </header>
+
+  <main class="frame">
+    <nav id="families" class="families" role="tablist" aria-label="families"></nav>
+    <section id="family" class="encoder-panel family-panel" aria-live="polite"></section>
+    <article id="detail" class="encoder-panel detail" aria-live="polite"></article>
+
+  </main>
+</div>
+<script type="module" src="js/encoders-page.js"></script>
+</body>
+</html>

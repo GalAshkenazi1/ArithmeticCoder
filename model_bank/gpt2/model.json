@@ -8,6 +8,19 @@
   "vocab_size": 50257,
   "precision_bits": 26,
   "context_tokens": 256,
+  "dataset": {
+    "name": "WebText",
+    "about": "about 40 GB of text from 8 million web pages that Reddit users linked to (OpenAI, 2019)",
+    "url": "https://openai.com/index/better-language-models/"
+  },
+  "examples": [
+    "Scientists announced on Tuesday that the new vaccine is safe and effective.",
+    "The company said it expects revenue to grow by 10 percent next year."
+  ],
+  "training": {
+    "params": 123653376,
+    "block_size": 1024
+  },
   "source": "https://huggingface.co/openai-community/gpt2/resolve/main/",
   "licence": "MIT (OpenAI GPT-2)"
 }

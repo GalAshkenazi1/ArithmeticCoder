@@ -1,5 +1,24 @@
 {
   "name": "English-GPT",
   "description": "same architecture, trained on 19th-century Gutenberg prose (Austen, Doyle, Dickens, Shelley, Carroll)",
-  "kind": "nanogpt"
+  "kind": "nanogpt",
+  "dataset": {
+    "name": "Project Gutenberg novels",
+    "about": "five 19th-century novels: Pride and Prejudice, The Adventures of Sherlock Holmes, A Tale of Two Cities, Frankenstein and Alice's Adventures in Wonderland",
+    "url": "https://www.gutenberg.org",
+    "chars": 1115394
+  },
+  "examples": [
+    "'I am quite sure,' said Elizabeth, 'that he never meant to be unkind.'",
+    "'My dear,' said Mrs. Bennet, 'you must not be so very unkind to your sister.'"
+  ],
+  "training": {
+    "corpus": "gutenberg",
+    "corpus_chars": 1115394,
+    "vocab": "shakespeare",
+    "params": 804224,
+    "iters": 2000,
+    "block_size": 128,
+    "val_bits_per_char": 2.512
+  }
 }

@@ -2,6 +2,17 @@
   "name": "Web-GPT",
   "description": "3.2M-param char nanoGPT trained on modern web text (C4)",
   "kind": "nanogpt",
+  "showcase": false,
+  "dataset": {
+    "name": "C4 (Colossal Clean Crawled Corpus)",
+    "about": "English web pages (shops, news, blogs, how-tos), cleaned of menus and boilerplate",
+    "url": "https://huggingface.co/datasets/allenai/c4",
+    "chars": 12000000
+  },
+  "examples": [
+    "Click here to read more about our free shipping offer.",
+    "We are a family-owned business serving the community for over 20 years."
+  ],
   "training": {
     "corpus": "c4",
     "corpus_chars": 12000000,

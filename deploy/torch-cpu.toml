@@ -1,0 +1,11 @@
+
+# Appended to pyproject.toml by the Dockerfiles (then uv re-locks): on Linux, take torch from
+# PyTorch's CPU-only index. The default Linux wheel pulls ~2.5 GB of CUDA libraries the app never
+# uses. Kept out of pyproject.toml itself because training/ (a CUDA build) depends on this package.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
