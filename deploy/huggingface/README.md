@@ -7,6 +7,7 @@ sdk: docker
 app_port: 7860
 short_description: Squeeze text into bits with language models
 pinned: false
+license: mit
 ---
 
 # Fewer bits, by guessing the next letter

@@ -177,3 +177,8 @@ that the model loads.
   - [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories): CDLA-Sharing-1.0
   - [C4](https://huggingface.co/datasets/allenai/c4): ODC-BY
   - the Python standard library's source: PSF licence
+
+## Licence
+
+The code is under the [MIT licence](LICENSE). The training text and the trained model weights keep
+their own terms (see Credits).

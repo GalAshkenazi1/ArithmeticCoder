@@ -1,6 +1,7 @@
 # Deploy to the Hugging Face Space on every release tag (v1.0, v1.1, ...), or by hand from the Actions tab.
 # The Space rebuilds from deploy/huggingface/Dockerfile with REF set to the tag.
 # Needs a repository secret HF_TOKEN: a Hugging Face access token with write access to the Space.
+# Without it (or before the Space exists) the job skips with a note instead of failing.
 name: Deploy to Hugging Face
 
 on:
@@ -19,6 +20,10 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           REF: ${{ github.ref_name }}
         run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::notice::No HF_TOKEN secret yet: skipping the deploy (add it, then re-run this workflow)."
+            exit 0
+          fi
           git clone "https://GalAshk:${HF_TOKEN}@huggingface.co/spaces/GalAshk/arithmetic-coder" space
           cp deploy/huggingface/README.md space/README.md
           sed "s/^ARG REF=.*/ARG REF=${REF}/" deploy/huggingface/Dockerfile > space/Dockerfile

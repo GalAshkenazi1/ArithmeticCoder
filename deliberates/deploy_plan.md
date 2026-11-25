@@ -32,11 +32,13 @@ Done in the code (not yet committed):
 - [x] **Home-screen app (PWA):** manifest, icons, and a network-first service worker.
 - [x] **README:** live-demo link, an animated GIF, four screenshots, and credits.
 
+Also done:
+- [x] **Release:** MIT `LICENSE`, `encoder-showcase` merged into `master`, tagged `v1.0` and pushed.
+
 Left, all needing you:
-1. **Release:** commit, merge `encoder-showcase` into `master`, tag `v1.0`, push.
-2. **Make the GitHub repo public.**
-3. **Create the Space** (Docker, CPU basic) and add the two files from `deploy/huggingface/`.
-4. **Optional, for automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
+1. **Make the GitHub repo public.**
+2. **Create the Space** (Docker, CPU basic) and add the two files from `deploy/huggingface/`.
+3. **Optional, for automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
 
 Goal: a public link anyone can open from a LinkedIn post, on a laptop or a phone, that runs the full
 showcase (all four pages, GPT-2 included), plus a GitHub repo that looks good when people click
