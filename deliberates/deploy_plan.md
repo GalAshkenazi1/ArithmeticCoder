@@ -57,12 +57,17 @@ Also done:
 - [x] **The GitHub repo is public.**
 
 Left, all needing you:
-- [x] **The Space is created** with the three files from `deploy/huggingface/`.
+- [x] **The Space is live** (2026-11-26) at https://galashk-arithmetic-coder.hf.space, on ZeroGPU
+      hardware with Python 3.12 and torch 2.13. Checked live: health, all four pages, the manifest
+      and service worker, and every encoder round-trips, GPT-2 included (about 1.8 s to encode a
+      sentence, network included). "Word" costs 12 bits there too, as the start page's heading says.
+      Two encoders differ by 2 bits from a local run on the Hamlet line (another CPU and torch
+      build); every number on the pages is computed live, so nothing contradicts.
 
-Left:
-1. **Upload the new `README.md`** (and `requirements.txt`, whose comment changed) from
-   `deploy/huggingface/` to the Space: it asks for Python 3.12.
-2. **Optional, for automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
+Left (optional):
+1. **Automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
+2. **Before posting:** open the link to wake the Space; it sleeps after 48 h without visitors and
+   takes a minute or two to start.
 
 Goal: a public link anyone can open from a LinkedIn post, on a laptop or a phone, that runs the full
 showcase (all four pages, GPT-2 included), plus a GitHub repo that looks good when people click
