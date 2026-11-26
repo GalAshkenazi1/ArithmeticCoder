@@ -17,19 +17,23 @@ Done in the code:
       (`ARITH_WAIT_SECONDS`), and `GET /api/health`. All covered by tests.
 - [x] **Container:** `Dockerfile` and `.dockerignore`, for any host that runs Docker.
 - [x] **The Space, as a Gradio-SDK Space:** the new-Space form offered only Gradio and Static
-      because ZeroGPU hardware was selected. ZeroGPU allows only Gradio Spaces, and its build caps
-      torch at 2.13, which broke the first build. The app runs on CPU anyway, so the Space must use
-      **CPU basic** (free), not ZeroGPU. A Gradio Space installs `requirements.txt` and runs
-      `python app.py`, which can be any server on port 7860, so the three files in
+      because ZeroGPU hardware was selected. CPU basic needs Hugging Face Pro on this account, so
+      the Space stays on ZeroGPU, which allows only Gradio Spaces and caps torch at 2.13 (the first
+      build failed on our torch 2.15 pin). The app still runs on the CPU and never asks for the GPU,
+      so visitors use none of their ZeroGPU quota. A Gradio Space installs `requirements.txt` and
+      runs `python app.py`, which can be any server on port 7860, so the three files in
       `deploy/huggingface/` run our own app:
   - `README.md`: the settings header (`sdk: gradio`, `python_version: "3.13"`, `app_file: app.py`)
-  - `requirements.txt`: the app's packages at the `uv.lock` versions, with CPU-only torch as a
-    direct wheel link (no extra index, so it works with pip or uv)
-  - `app.py`: at start-up, downloads the GitHub tag's source, installs GPT-2, and runs `arith-demo`
+  - `requirements.txt`: the app's packages at the `uv.lock` versions, except `torch==2.13.0`
+  - `app.py`: at start-up, downloads the GitHub tag's source, installs GPT-2, sends ZeroGPU the
+    start-up report Gradio apps send (from a separate process, because importing `spaces` hooks
+    every torch operation), and runs `arith-demo`
   - `.github/workflows/deploy-space.yml` copies them to the Space on each tag.
-- [x] **The Space checked on Linux** (WSL): a fresh Python 3.13 with `requirements.txt` and Gradio
-      6.32.0 installs with no conflicts and no CUDA; `python app.py` in an empty folder downloads
-      `v1.0` from GitHub and serves all 10 encoders after 73 s; every encoder round-trips.
+- [x] **The Space checked on Linux** (WSL, with torch 2.15): `python app.py` in an empty folder
+      downloads `v1.0` from GitHub and serves all 10 encoders after 73 s; every encoder round-trips.
+- [x] **torch 2.13 checked:** the app's 123 tests pass with it, including the recorded reference
+      encodings (bit-identical) and GPT-2. If the ZeroGPU report fails, `app.py` logs it and serves
+      anyway.
 - [x] **Checked on Linux** (WSL, without Docker):
   - the build steps work: CPU torch with no CUDA, GPT-2 downloads and converts, all 10 models
     preload (GPT-2 in 8 s)
@@ -54,8 +58,8 @@ Left, all needing you:
 - [x] **The Space is created** with the three files from `deploy/huggingface/`.
 
 Left:
-1. **Switch the Space's hardware to CPU basic:** Settings → Space hardware. Its first build failed on
-   ZeroGPU.
+1. **Upload the new `app.py` and `requirements.txt`** from `deploy/huggingface/` to the Space (the
+   ZeroGPU-compatible versions).
 2. **Optional, for automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
 
 Goal: a public link anyone can open from a LinkedIn post, on a laptop or a phone, that runs the full
@@ -130,7 +134,7 @@ Space builds from it.
 **1. Create the Space**
 
 - [ ] **Create it:** huggingface.co → New Space → SDK "Gradio", template "Blank" → hardware
-      **CPU basic**, not ZeroGPU (see the status above) → public.
+      ZeroGPU (the free option for Gradio Spaces here) or CPU basic → public.
 - [ ] **Space files:** upload the three files in `deploy/huggingface/`. No model files live in the
       Space, so it needs no Git LFS.
 - [ ] **Cold start:** about 75 s in the WSL test: the source download, GPT-2's download and

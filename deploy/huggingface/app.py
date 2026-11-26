@@ -10,6 +10,9 @@ At start-up it:
 
 A free Space forgets its disk when it sleeps, so waking up repeats these steps (a minute or two).
 To serve another tag or branch, set the Space variable ARITH_REF.
+
+On ZeroGPU hardware (the free tier for Gradio Spaces) the models still run on the CPU: the app never
+asks for the GPU, so visitors use none of their ZeroGPU quota.
 """
 from __future__ import annotations
 
@@ -64,6 +67,23 @@ def install_gpt2() -> None:
         shutil.rmtree(ROOT / "training" / "_downloads", ignore_errors=True)
 
 
+def report_zerogpu_startup() -> None:
+    """On a ZeroGPU Space, tell its GPU service that the app has started, as Gradio apps do.
+
+    It runs in a separate process: importing `spaces` hooks every torch operation, which would slow
+    the CPU models down. If the report fails, the app is served anyway.
+    """
+    if os.environ.get("SPACES_ZERO_GPU", "").lower() not in ("1", "t", "true"):
+        return
+    try:
+        result = subprocess.run([sys.executable, "-c", "import spaces.zero; spaces.zero.startup()"],
+                                capture_output=True, text=True, timeout=180)
+        outcome = "sent" if result.returncode == 0 else f"failed: {result.stderr.strip()[-500:]}"
+    except subprocess.TimeoutExpired:
+        outcome = "timed out"
+    print(f"ZeroGPU startup report {outcome}", flush=True)
+
+
 def serve() -> None:
     """Run the showcase server (the repository's arith-demo) from the unpacked source."""
     os.environ.update(HOST="0.0.0.0", PORT=os.environ.get("GRADIO_SERVER_PORT", "7860"))
@@ -79,4 +99,5 @@ def serve() -> None:
 if __name__ == "__main__":
     fetch_source()
     install_gpt2()
+    report_zerogpu_startup()
     serve()
