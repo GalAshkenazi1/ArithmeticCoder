@@ -1,6 +1,7 @@
 # What the Space installs, next to Gradio (the Gradio SDK always adds it; the app doesn't use it).
 # torch 2.13.0 is the newest version a ZeroGPU Space allows: its build adds "torch<=2.13.0". The app
 # runs it on the CPU and never asks for the GPU. The other versions are the same as uv.lock.
+# README.md asks for Python 3.12: ZeroGPU supports only 3.12 and 3.10 (fastapi 0.165 needs 3.11+).
 torch==2.13.0
 fastapi==0.165.0
 uvicorn==0.54.0

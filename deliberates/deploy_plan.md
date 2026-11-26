@@ -23,7 +23,7 @@ Done in the code:
       so visitors use none of their ZeroGPU quota. A Gradio Space installs `requirements.txt` and
       runs `python app.py`, which can be any server on port 7860, so the three files in
       `deploy/huggingface/` run our own app:
-  - `README.md`: the settings header (`sdk: gradio`, `python_version: "3.13"`, `app_file: app.py`)
+  - `README.md`: the settings header (`sdk: gradio`, `python_version: "3.12"`, `app_file: app.py`)
   - `requirements.txt`: the app's packages at the `uv.lock` versions, except `torch==2.13.0`
   - `app.py`: at start-up, downloads the GitHub tag's source, installs GPT-2, sends ZeroGPU the
     start-up report Gradio apps send (from a separate process, because importing `spaces` hooks
@@ -31,8 +31,10 @@ Done in the code:
   - `.github/workflows/deploy-space.yml` copies them to the Space on each tag.
 - [x] **The Space checked on Linux** (WSL, with torch 2.15): `python app.py` in an empty folder
       downloads `v1.0` from GitHub and serves all 10 encoders after 73 s; every encoder round-trips.
-- [x] **torch 2.13 checked:** the app's 123 tests pass with it, including the recorded reference
-      encodings (bit-identical) and GPT-2. If the ZeroGPU report fails, `app.py` logs it and serves
+- [x] **Python 3.12:** ZeroGPU supports only Python 3.12 and 3.10, and the second build failed on
+      3.13 (it fell back to 3.10, where fastapi 0.165 can't install). The Space now asks for 3.12.
+- [x] **torch 2.13 checked, on Python 3.12 and 3.13:** the app's 123 tests pass, including the
+      recorded reference encodings (bit-identical) and GPT-2. If the ZeroGPU report fails, `app.py` logs it and serves
       anyway.
 - [x] **Checked on Linux** (WSL, without Docker):
   - the build steps work: CPU torch with no CUDA, GPT-2 downloads and converts, all 10 models
@@ -58,8 +60,8 @@ Left, all needing you:
 - [x] **The Space is created** with the three files from `deploy/huggingface/`.
 
 Left:
-1. **Upload the new `app.py` and `requirements.txt`** from `deploy/huggingface/` to the Space (the
-   ZeroGPU-compatible versions).
+1. **Upload the new `README.md`** (and `requirements.txt`, whose comment changed) from
+   `deploy/huggingface/` to the Space: it asks for Python 3.12.
 2. **Optional, for automatic redeploys:** add an `HF_TOKEN` (write) secret to the GitHub repo.
 
 Goal: a public link anyone can open from a LinkedIn post, on a laptop or a phone, that runs the full

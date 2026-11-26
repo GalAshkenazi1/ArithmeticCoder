@@ -5,7 +5,7 @@ colorFrom: indigo
 colorTo: green
 sdk: gradio
 sdk_version: 6.32.0
-python_version: "3.13"
+python_version: "3.12"
 app_file: app.py
 short_description: Squeeze text into bits with language models
 pinned: false
